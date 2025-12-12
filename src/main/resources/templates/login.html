@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Riot Login</title>
+    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}">
+    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
+    <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
+    <link rel="manifest" href="../static/favicon/site.webmanifest" th:href="@{/favicon/site.webmanifest}">
+    <!-- Matomo -->
+    <script>
+    var _paq = window._paq = window._paq || [];
+    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="//matomo.rsmnarts.com/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '1']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    <!-- End Matomo Code -->
+</head>
+<body class="bg-valorant-base text-valorant-text-primary min-h-screen flex items-center justify-center p-4">
+    <div class="container w-full max-w-md bg-valorant-card p-8 rounded-lg shadow-2xl border border-white/10">
+        <h1 class="text-3xl font-bold text-valorant-red text-center mb-8 uppercase tracking-widest border-b border-valorant-red pb-4">Riot Authentication</h1>
+
+        <div class="step mb-6">
+            <h3 class="text-xl font-semibold mb-2 text-white">Step 1: Login to Riot</h3>
+            <p class="text-valorant-text-secondary text-sm mb-4">Click the button below to open the Riot login page. Log in, then copy the URL of the blank page you are redirected to.</p>
+            <select name="region-select" id="region" th:value="${region}" class="w-full p-3 bg-valorant-base appearance-none border border-white/20 text-white rounded focus:border-valorant-red focus:outline-none transition-colors mb-4 placeholder-gray-600 ">
+                <option value="ap">Asia Pacific</option>
+                <option value="kr">Korea</option>
+                <option value="eu">Europe / Turkey</option>
+                <option value="na">North America / Latin America / Brazil</option>
+            </select>
+            <a id="login-link" th:href="${loginUrl}" target="_blank" class="block">
+                <button class="w-full py-3 bg-valorant-red hover:bg-red-700 text-white font-bold uppercase tracking-wider transition-all duration-300 rounded shadow-lg hover:shadow-valorant-red/50">
+                    Open Riot Login
+                </button>
+            </a>
+        </div>
+
+        <div class="step mb-6 border-t border-white/10 pt-6">
+            <h3 class="text-xl font-semibold mb-2 text-white">Step 2: Paste Redirect URL</h3>
+            <p class="text-valorant-text-secondary text-sm mb-4">Paste the URL starting with <code>https://playvalorant.com/opt_in</code> below.</p>
+            <input type="text" id="redirectUrl" placeholder="Paste URL here..." class="w-full p-3 bg-valorant-base border border-white/20 text-white rounded focus:border-valorant-red focus:outline-none transition-colors mb-4 placeholder-gray-600" />
+            <button onclick="submitUrl()" class="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider transition-all duration-300 rounded border border-white/20 hover:border-white/50">
+                Submit
+            </button>
+            <p class="text-valorant-text-secondary text-sm mt-4">If you have any issues, please <a href="https://github.com/rsmnarts/valoo/issues" target="_blank" class="text-valorant-red font-bold">report them here</a>.</p>
+        </div>
+
+        <div id="result" class="hidden mt-4 p-4 rounded bg-black/20 text-sm break-all"></div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'valorant_puuid';
+
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.get('logout') === 'true') {
+                 localStorage.removeItem(STORAGE_KEY);
+                 return;
+            }
+
+            const storedPuuid = localStorage.getItem(STORAGE_KEY);
+            if (storedPuuid) {
+                console.log("Auto-redirecting with stored PUUID...");
+                 window.location.href = '/stores?puuid=' + storedPuuid;
+            }
+
+            const regionSelect = document.getElementById('region');
+            const loginLink = document.getElementById('login-link');
+            if (loginLink && regionSelect) {
+                const baseLoginUrl = loginLink.getAttribute('href');
+
+                function updateLoginUrl() {
+                    const region = regionSelect.value;
+                    const separator = baseLoginUrl.includes('?') ? '&' : '?';
+                    loginLink.href = baseLoginUrl + separator + 'region=' + region;
+                }
+
+                regionSelect.addEventListener('change', updateLoginUrl);
+                updateLoginUrl();
+            }
+        };
+
+        async function submitUrl() {
+            const url = document.getElementById('redirectUrl').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!url) {
+                alert("Please paste the URL first.");
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/process-callback', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+
+                const data = await response.json();
+                resultDiv.style.display = 'block';
+
+                if (response.ok) {
+                    const result = data.data;
+                    resultDiv.style.color = 'green';
+                    resultDiv.textContent = "Login Successful! Redirecting...";
+
+                    // Save tokens and PUUID to local storage
+                    localStorage.setItem(STORAGE_KEY, result.userId);
+                    localStorage.setItem('valorant_access_token', result.accessToken);
+                    localStorage.setItem('valorant_entitlements_token', result.entitlementsToken);
+
+                    // Redirect to the weapons view
+                    setTimeout(() => {
+                         window.location.href = '/stores?puuid=' + result.userId;
+                    }, 1000);
+                } else {
+                    resultDiv.style.color = 'red';
+                    resultDiv.textContent = "Error: " + (data.message || JSON.stringify(data));
+                }
+            } catch (error) {
+                resultDiv.style.display = 'block';
+                resultDiv.style.color = 'red';
+                resultDiv.textContent = "Network Error: " + error.message;
+            }
+        }
+    </script>
+</body>
+</html>

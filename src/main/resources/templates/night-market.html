@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Valorant Night Market</title>
+    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
+    <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
+    <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
+    <link rel="manifest" href="../static/favicon/site.webmanifest" th:href="@{/favicon/site.webmanifest}">
+    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}">
+    <!-- Matomo -->
+    <script>
+    var _paq = window._paq = window._paq || [];
+    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
+    _paq.push(['trackPageView']);
+    _paq.push(['enableLinkTracking']);
+    (function() {
+        var u="//matomo.rsmnarts.com/";
+        _paq.push(['setTrackerUrl', u+'matomo.php']);
+        _paq.push(['setSiteId', '1']);
+        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
+        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
+    })();
+    </script>
+    <!-- End Matomo Code -->
+</head>
+<body class="bg-valorant-base text-valorant-text-primary min-h-screen flex flex-col items-center p-5">
+    <div class="flex justify-between items-center w-full max-w-7xl mb-10 border-b-2 border-valorant-red pb-4">
+        <h1 class="text-4xl text-valorant-red uppercase tracking-widest font-bold">Daily Store</h1>
+        <div class="flex flex-col items-center">
+             <div id="store-countdown" class="text-valorant-text-primary text-lg font-mono font-bold"></div>
+        </div>
+        <div id="player-name-tagline" class="flex items-center space-x-4">
+            <div class="flex items-center">
+                <h2 id="player-name" class="text-2xl text-valorant-text"></h2>
+                <h2 id="player-tagline" class="text-2xl text-valorant-text-secondary"></h2>
+            </div>
+        </div>
+        <div class="flex items-center">
+            <a href="/stores" id="night-market-btn" class="bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Daily Store</a>
+            <button id="logout-btn" class="bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
+        </div>
+    </div>
+
+    <div id="loading" class="text-2xl text-valorant-text-secondary mt-12 animate-pulse">Loading Night Market...</div>
+    <div id="error" class="text-valorant-red text-xl text-center hidden"></div>
+    <div id="weapons-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full max-w-7xl p-2"></div>
+
+    <div id="video-modal">
+        <div id="video-content-wrapper">
+            <button id="modal-close-btn" onclick="closeVideo()">
+                <span>Close</span>
+                <span style="font-size: 1.5em; line-height: 1;">&times;</span>
+            </button>
+            <div class="relative pt-[56.25%] bg-black rounded-lg overflow-hidden group" style="position: relative; padding-top: 56.25%;">
+                <!-- Loading Spinner -->
+                <div id="video-loader">
+                     <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-valorant-red" style="border-top-color: #ff4655; border-bottom-color: #ff4655;"></div>
+                </div>
+                <!-- Video Element -->
+                <video id="modal-video" controls autoplay style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 10;">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Use existing logout function if exposed or redefine
+        function logout() {
+            localStorage.removeItem('valorant_puuid');
+            localStorage.removeItem('valorant_access_token');
+            localStorage.removeItem('valorant_entitlements_token');
+            window.location.href = '/?logout=true';
+            return;
+        }
+
+        function openVideo(url) {
+            const modal = document.getElementById('video-modal');
+            const video = document.getElementById('modal-video');
+            const loader = document.getElementById('video-loader');
+            
+            // Show loader initially
+            loader.style.display = 'flex';
+            
+            video.src = url;
+            
+            // Event listeners for loading state
+            video.onwaiting = () => { loader.style.display = 'flex'; };
+            video.onplaying = () => { loader.style.display = 'none'; };
+            video.oncanplay = () => { loader.style.display = 'none'; };
+            video.onloadstart = () => { loader.style.display = 'flex'; };
+
+            modal.classList.add('active');
+            
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+            
+            // Close on background click
+            modal.onclick = function(e) {
+                if (e.target === modal) {
+                    closeVideo();
+                }
+            };
+        }
+
+        function closeVideo() {
+            const modal = document.getElementById('video-modal');
+            const video = document.getElementById('modal-video');
+            video.pause();
+            video.src = '';
+            
+            // Remove event listeners
+            video.onwaiting = null;
+            video.onplaying = null;
+            video.oncanplay = null;
+            video.onloadstart = null;
+            
+            modal.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            let puuid = urlParams.get('puuid');
+            const puuidStored = localStorage.getItem('valorant_puuid');
+            
+            const accessToken = localStorage.getItem('valorant_access_token');
+            const entitlementsToken = localStorage.getItem('valorant_entitlements_token');
+            // Check for tokens
+            if (!accessToken || !entitlementsToken) {
+                logout();
+                return;
+            }
+
+            const loadingEl = document.getElementById('loading');
+            const errorEl = document.getElementById('error');
+            const gridEl = document.getElementById('weapons-grid');
+
+            if (!puuid) {
+                if (!puuidStored) {
+                    loadingEl.style.display = 'none';
+                    errorEl.textContent = 'User ID (puuid) is missing from the URL.';
+                    errorEl.style.display = 'block';
+                    setInterval(() => {
+                        logout();
+                    }, 2000);
+                    return;
+                }
+                puuid = puuidStored;
+            } else {
+                // Should probably update the stored PUUID if it matches current user session logic
+                // But generally sticking to stored is safer. 
+                // For now, let's respect URL puuid if consistent with login flow
+            }
+             
+            // Update back link with PUUID
+            const backLink = document.querySelector('a[href="/stores"]');
+            if (backLink) {
+                backLink.href = `/stores?puuid=${puuid}`;
+            }
+
+            try {
+                // Fetch player name simply to display it
+                const responsePlayers = await fetch(`/api/riot-valo/players/${puuid}`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Entitlements-Token': entitlementsToken,
+                        'Region': 'ap'
+                    }
+                });
+
+                if (responsePlayers.ok) {
+                    const jsonResponsePlayers = await responsePlayers.json();
+                    const playerName = jsonResponsePlayers.data?.[0]?.GameName;
+                    const playerTagline = jsonResponsePlayers.data?.[0]?.TagLine;
+
+                    if (playerName && playerTagline) {
+                        document.getElementById('player-name').textContent = playerName;
+                        document.getElementById('player-tagline').textContent = '#' + playerTagline;
+                    }
+                }
+
+
+                const responseNightMarket = await fetch(`/api/riot-valo/storefront/${puuid}/night-market`, {
+                    headers: {
+                        'Authorization': 'Bearer ' + accessToken,
+                        'Entitlements-Token': entitlementsToken,
+                        'Region': 'ap'
+                    }
+                });
+                
+                if (!responseNightMarket.ok) {
+                    if (responseNightMarket.status === 401 || responseNightMarket.status === 403) {
+                        logout();
+                        return;
+                    }
+                    throw new Error(`Failed to fetch Night Market: ${responseNightMarket.status} ${responseNightMarket.statusText}`);
+                }
+
+                const jsonResponse = (await responseNightMarket.json())?.data;
+                const skins = jsonResponse.items;
+                const expireAt = jsonResponse.expireAt;
+                
+                if (expireAt) {
+                    const startCountdown = () => {
+                        const now = Math.floor(Date.now() / 1000);
+                        let diff = expireAt - now;
+
+                        if (diff <= 0) {
+                            document.getElementById('store-countdown').textContent = "EXPIRED";
+                            return;
+                        }
+
+                        const days = Math.floor(diff / 86400); 
+                        const hours = Math.floor((diff % 86400) / 3600);
+                        const minutes = Math.floor((diff % 3600) / 60);
+                        const seconds = diff % 60;
+
+                        const formatted = 
+                            days + "d " + 
+                            (hours < 10 ? "0" + hours : hours) + ":" + 
+                            (minutes < 10 ? "0" + minutes : minutes) + ":" + 
+                            (seconds < 10 ? "0" + seconds : seconds);
+                       
+                        document.getElementById('store-countdown').textContent = "Ends in: " + formatted;
+                    };
+                    
+                    startCountdown(); // Initial call
+                    setInterval(startCountdown, 1000);
+                }
+
+                loadingEl.style.display = 'none';
+
+                if (!skins || skins.length === 0) {
+                    errorEl.textContent = 'Night Market is not currently available or empty.';
+                    errorEl.style.display = 'block';
+                    return;
+                }
+
+                skins.forEach(skin => {
+                    const card = document.createElement('div');
+                    card.className = 'bg-valorant-card rounded overflow-hidden relative border border-white/10 hover:-translate-y-1 hover:shadow-2xl hover:border-valorant-red transition-all duration-300 group';
+                    
+                    const displayName = skin.displayName || 'Unknown Skin';
+                    const displayIcon = skin.displayIcon || '';
+                    const originalCost = skin.originalCost || 'N/A';
+                    const discountedCost = skin.discountedCost || 'N/A';
+                    const discountPercent = skin.discountPercent ? Math.round(skin.discountPercent) : 0;
+                    const videoUrl = skin.streamedVideo;
+
+                    let videoButtonHtml = '';
+                    
+                     if (skin.levels && skin.levels.length > 0) {
+                        let buttons = '';
+                        skin.levels.forEach((level, index) => {
+                            if (level.streamedVideo) {
+                                // Extract level number or simple name if possible, otherwise L(i+1)
+                                let btnLabel = 'L' + (index + 1);
+                                if (level.displayName) {
+                                     const match = level.displayName.match(/Level (\d+)/i);
+                                     if (match) {
+                                         btnLabel = 'L' + match[1];
+                                     }
+                                }
+                                
+                                buttons += `<button onclick="openVideo('${level.streamedVideo}')" class="inline-block mr-2 mb-2 w-10 h-10 flex items-center justify-center bg-white/5 border border-white/20 text-white text-sm font-bold hover:bg-valorant-red hover:border-valorant-red transition-all duration-200 p-2" title="${level.displayName || 'Level ' + (index + 1)}">${btnLabel}</button>`;
+                            }
+                        });
+                        
+                        if (buttons) {
+                             videoButtonHtml = `<div class="mt-4 flex flex-wrap">${buttons}</div>`;
+                        } else if (skin.streamedVideo) {
+                           videoButtonHtml = `<button onclick="openVideo('${skin.streamedVideo}')" class="inline-block mt-4 px-6 py-2 bg-valorant-red text-white text-sm font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
+                        }
+                    } else if (videoUrl) {
+                        videoButtonHtml = `<button onclick="openVideo('${videoUrl}')" class="inline-block mt-4 px-6 py-2 bg-valorant-red text-white text-sm font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
+                    }
+
+                    card.innerHTML = `
+                         <div class="absolute top-2 right-2 bg-yellow-400 text-black font-bold px-2 py-1 rounded shadow-lg z-10">-${discountPercent}%</div>
+                        <div class="w-full h-48 flex items-center justify-center bg-gradient-to-br from-[#2c353e] to-[#1c252e] p-4 relative">
+                            <img src="${displayIcon}" alt="${displayName}" class="max-w-full max-h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-2" onerror="this.src='https://via.placeholder.com/300x100?text=No+Image'">
+                        </div>
+                        <div class="p-5">
+                            <div class="text-lg font-bold mb-2 uppercase text-valorant-text-primary tracking-wide leading-tight">${displayName}</div>
+                            <div class="flex items-center justify-between mt-2 mb-4 bg-black/20 p-2 rounded">
+                                <span class="text-gray-400 line-through text-sm flex items-center decoration-red-500 decoration-2 line-through">
+                                     <span class="w-4 h-4 mr-1 bg-gray-500 rounded-full flex items-center justify-center text-[10px] text-white font-bold opacity-50 mx-2">VP</span> ${originalCost}
+                                </span>
+                                <span class="text-white font-bold text-xl flex items-center text-green-400">
+                                     <span class="w-5 h-5 mr-1 bg-valorant-red rounded-full flex items-center justify-center text-xs text-white font-bold mx-2">VP</span> ${discountedCost}
+                                </span>
+                            </div>
+                            ${videoButtonHtml}
+                        </div>
+                    `;
+                    gridEl.appendChild(card);
+                });
+
+            } catch (err) {
+                console.error(err);
+                loadingEl.style.display = 'none';
+                errorEl.textContent = 'Error loading Night Market: ' + err.message;
+                errorEl.style.display = 'block';
+            }
+        });
+    </script>
+</body>
+</html>

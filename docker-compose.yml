@@ -1,0 +1,25 @@
+services:
+  app:
+    build: .
+    container_name: valorant-widgets-app
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    depends_on:
+      - redis
+    networks:
+      - valorant-net
+
+  redis:
+    image: redis:alpine
+    container_name: valorant-widgets-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - valorant-net
+
+networks:
+  valorant-net:
+    driver: bridge
