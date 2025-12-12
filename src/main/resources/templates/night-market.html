@@ -65,6 +65,10 @@
     </div>
 
     <script>
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            logout();
+        });
+
         // Use existing logout function if exposed or redefine
         function logout() {
             localStorage.removeItem('valorant_puuid');
