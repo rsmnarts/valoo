@@ -56,6 +56,6 @@ echo "Output: $OUTPUT_CSS"
 echo "Config: $CONFIG_FILE"
 
 # Run Build
-./$tmpBin/$BINARY_NAME -i "$INPUT_CSS" -o "$OUTPUT_CSS" --config "$CONFIG_FILE" --minify
+./$tmpBin/$BINARY_NAME -i "$INPUT_CSS" -o "$OUTPUT_CSS" --config "$CONFIG_FILE" $@
 
 echo "CSS Build Successful!"

@@ -2,6 +2,7 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Valorant Night Market</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
     <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
     <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
@@ -24,20 +25,23 @@
     <!-- End Matomo Code -->
 </head>
 <body class="bg-valorant-base text-valorant-text-primary min-h-screen flex flex-col items-center p-5">
-    <div class="flex justify-between items-center w-full max-w-7xl mb-10 border-b-2 border-valorant-red pb-4">
-        <h1 class="text-4xl text-valorant-red uppercase tracking-widest font-bold">Daily Store</h1>
-        <div class="flex flex-col items-center">
-             <div id="store-countdown" class="text-valorant-text-primary text-lg font-mono font-bold"></div>
+
+    <div class="flex flex-col lg:flex-row justify-between items-center w-full max-w-7xl mb-10 border-b-2 border-valorant-red pb-4 gap-6 lg:gap-0">
+        <div id="store-header" class="flex w-full lg:w-auto justify-center lg:justify-start">
+            <h1 class="text-3xl lg:text-4xl text-valorant-red uppercase tracking-widest font-bold text-center lg:text-left">Night Market</h1>
         </div>
-        <div id="player-name-tagline" class="flex items-center space-x-4">
-            <div class="flex items-center">
-                <h2 id="player-name" class="text-2xl text-valorant-text"></h2>
-                <h2 id="player-tagline" class="text-2xl text-valorant-text-secondary"></h2>
+        <div class="flex flex-col items-center w-full lg:w-auto">
+             <div id="store-countdown" class="text-valorant-text-primary text-lg font-mono font-bold text-center"></div>
+        </div>
+        <div id="player-name-tagline" class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center lg:space-x-4">
+            <div class="flex items-center justify-center">
+                <h2 id="player-name" class="text-xl lg:text-2xl text-valorant-text"></h2>
+                <h2 id="player-tagline" class="text-xl lg:text-2xl text-valorant-text-secondary ml-2"></h2>
             </div>
         </div>
-        <div class="flex items-center">
-            <a href="/stores" id="night-market-btn" class="bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Daily Store</a>
-            <button id="logout-btn" class="bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
+        <div class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center gap-3 lg:gap-0">
+            <a href="/stores" id="stores-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Daily Store</a>
+            <button id="logout-btn" class="w-full lg:w-auto bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
         </div>
     </div>
 
