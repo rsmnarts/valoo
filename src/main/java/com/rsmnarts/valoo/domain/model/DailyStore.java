@@ -27,6 +27,7 @@ public class DailyStore {
 		private String streamedVideo;
 		private String assetPath;
 		private String cost;
+		private String costIcon;
 		private Tier tier;
 		private List<Level> levels;
 		private List<Chroma> chromas;

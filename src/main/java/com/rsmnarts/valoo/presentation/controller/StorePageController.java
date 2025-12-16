@@ -17,4 +17,9 @@ public class StorePageController {
 	public String nightMarketPage() {
 		return "night-market";
 	}
+
+	@GetMapping("/match-history")
+	public String matchHistoryPage() {
+		return "match-history";
+	}
 }

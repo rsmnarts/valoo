@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rsmnarts.valoo.domain.model.DailyStore;
+import com.rsmnarts.valoo.domain.model.MatchHistory;
 import com.rsmnarts.valoo.domain.model.NightMarket;
 import com.rsmnarts.valoo.domain.usecase.RiotValorantUseCase;
 import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
@@ -49,6 +50,15 @@ public class RiotValorantController {
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity.ok(riotValoUseCase
 				.getNightMarket(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+	}
+
+	@GetMapping("/storefront/{puuid}/match-history")
+	public ResponseEntity<MatchHistory> getMatchHistory(@PathVariable String puuid,
+			@RequestHeader("Authorization") String accessToken,
+			@RequestHeader("Entitlements-Token") String entitlementsToken,
+			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
+		return ResponseEntity.ok(riotValoUseCase
+				.getMatchHistory(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
 	}
 
 	@GetMapping("/players/{puuid}")

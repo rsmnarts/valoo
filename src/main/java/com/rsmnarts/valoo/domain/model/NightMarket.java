@@ -26,6 +26,7 @@ public class NightMarket {
 		private String displayIcon;
 		private String streamedVideo;
 		private String assetPath;
+		private String costIcon;
 		private String originalCost;
 		private String discountedCost;
 		private Double discountPercent;

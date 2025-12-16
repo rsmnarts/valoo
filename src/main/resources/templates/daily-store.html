@@ -41,6 +41,7 @@
         </div>
         <div class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center gap-3 lg:gap-0">
             <a href="/stores/night-market" id="night-market-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Night Market</a>
+            <a href="/stores/match-history" id="match-history-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Matches</a>
             <button id="logout-btn" class="w-full lg:w-auto bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
         </div>
     </div>
@@ -267,6 +268,7 @@
                     const displayName = skin.displayName || 'Unknown Skin';
                     const displayIcon = skin.displayIcon || ''; // Should handle empty icon
                     const cost = skin.cost || 'N/A';
+                    const costIcon = skin.costIcon || 'vp';
                     const videoUrl = skin.streamedVideo;
 
                     let videoButtonHtml = '';
@@ -325,7 +327,7 @@
                         <div class="p-5">
                             <div class="text-lg font-bold mb-2 uppercase text-valorant-text-primary tracking-wide leading-tight min-h-[3.5rem]">${displayName}</div>
                             <div class="flex items-center text-base text-valorant-text-secondary mb-3">
-                                <span class="w-5 h-5 mr-2 bg-valorant-red rounded-full flex items-center justify-center text-xs text-white font-bold">VP</span> ${cost}
+                                <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center text-xs text-white font-bold"><img src="${costIcon}" alt="vp" class="w-5 h-5"></span> ${cost}
                             </div>
                             
                             ${chromaHtml}

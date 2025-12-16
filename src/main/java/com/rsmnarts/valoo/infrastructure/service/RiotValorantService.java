@@ -1,6 +1,7 @@
 package com.rsmnarts.valoo.infrastructure.service;
 
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
@@ -11,13 +12,20 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.rsmnarts.valoo.common.utils.json;
 import com.rsmnarts.valoo.domain.model.DailyStore;
+import com.rsmnarts.valoo.domain.model.MatchHistory;
 import com.rsmnarts.valoo.domain.model.NightMarket;
 import com.rsmnarts.valoo.domain.model.RiotAuth;
 import com.rsmnarts.valoo.domain.usecase.RiotValorantUseCase;
 import com.rsmnarts.valoo.infrastructure.client.RiotValorantApiClient;
+import com.rsmnarts.valoo.infrastructure.client.dto.AgentsResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.ClientPlatformRequest;
+import com.rsmnarts.valoo.infrastructure.client.dto.CompetitiveTiersResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.ContentTierResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.CurrencyResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.DailyStoreLevelResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.MapsResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.MatchDetailsResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.MatchHistoryResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse.SingleItemStoreOffer;
@@ -105,6 +113,8 @@ public class RiotValorantService implements RiotValorantUseCase {
 		ContentTierResponse contentTiers = valorantMetadataService
 				.getContentTiers();
 
+		CurrencyResponse currency = valorantMetadataService.getCurrency("85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741").getData();
+
 		for (SingleItemStoreOffer dailyStoreLevelData : storefrontResponse.getSkinsPanelLayout()
 				.getSingleItemStoreOffers()) {
 
@@ -126,7 +136,8 @@ public class RiotValorantService implements RiotValorantUseCase {
 					.assetPath(skinResponse.getData().getAssetPath())
 					.cost(dailyStoreLevelData.getCost() != null && !dailyStoreLevelData.getCost().isEmpty()
 							? String.valueOf(dailyStoreLevelData.getCost().values().iterator().next())
-							: null);
+							: null)
+					.costIcon(currency.getDisplayIcon());
 
 			if (parentSkin != null) {
 				if (parentSkin.getLevels() != null) {
@@ -210,6 +221,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 		WeaponSkinResponse allSkins = valorantMetadataService.getAllWeaponSkins();
 		ContentTierResponse contentTiers = valorantMetadataService
 				.getContentTiers();
+		CurrencyResponse currency = valorantMetadataService.getCurrency("85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741").getData();
 
 		for (StorefrontResponse.BonusStoreOffer bonusOffer : storefrontResponse.getBonusStore().getBonusStoreOffers()) {
 			String itemID = bonusOffer.getOffer().getRewards().get(0).getItemID();
@@ -228,6 +240,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 					.displayIcon(skinResponse.getData().getDisplayIcon())
 					.streamedVideo(skinResponse.getData().getStreamedVideo())
 					.assetPath(skinResponse.getData().getAssetPath())
+					.costIcon(currency.getDisplayIcon())
 					.originalCost(String.valueOf(bonusOffer.getOffer().getCost().values().iterator().next()))
 					.discountedCost(String.valueOf(bonusOffer.getDiscountCosts().values().iterator().next()))
 					.discountPercent(bonusOffer.getDiscountPercent());
@@ -285,4 +298,135 @@ public class RiotValorantService implements RiotValorantUseCase {
 				.build();
 	}
 
+	@Override
+	public MatchHistory getMatchHistory(String puuid, String accessToken, String entitlementsToken, String region) {
+		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
+
+		AgentsResponse agents = valorantMetadataService.getAgents();
+		MapsResponse maps = valorantMetadataService.getMaps();
+		CompetitiveTiersResponse tiers = valorantMetadataService.getCompetitiveTiers();
+
+		MatchHistoryResponse historyResponse = storeApiClient.getMatchHistory(getUrl(riotAuth.getShard()), puuid, 0, 5,
+				riotAuth.getClientPlatform(), riotAuth.getClientVersion(), riotAuth.getEntitlementsToken(),
+				riotAuth.getAuthorization());
+
+		List<MatchHistory.Match> matches = new ArrayList<>();
+
+		if (historyResponse != null && historyResponse.getHistory() != null) {
+			for (MatchHistoryResponse.History historyItem : historyResponse.getHistory()) {
+				try {
+					MatchDetailsResponse details = storeApiClient.getMatchDetails(getUrl(riotAuth.getShard()),
+							historyItem.getMatchID(), riotAuth.getClientPlatform(), riotAuth.getClientVersion(),
+							riotAuth.getEntitlementsToken(), riotAuth.getAuthorization());
+
+					if (details == null || details.getPlayers() == null)
+						continue;
+
+					MatchDetailsResponse.Player player = details.getPlayers().stream()
+							.filter(p -> p.getSubject().equalsIgnoreCase(puuid))
+							.findFirst().orElse(null);
+
+					if (player == null)
+						continue;
+
+					// Agent
+					String agentName = "Unknown";
+					String agentIcon = "";
+					if (agents != null && agents.getData() != null) {
+						String charId = player.getCharacterId();
+						AgentsResponse.Agent agent = agents.getData().stream()
+								.filter(a -> a.getUuid().equalsIgnoreCase(charId))
+								.findFirst().orElse(null);
+						if (agent != null) {
+							agentName = agent.getDisplayName();
+							agentIcon = agent.getDisplayIcon();
+						}
+					}
+
+					// Map
+					String mapName = "Unknown";
+					String mapPremier = "";
+					String mapBg = "";
+					if (maps != null && maps.getData() != null) {
+						String mapId = details.getMatchInfo().getMapId();
+						MapsResponse.ValorantMap map = maps.getData().stream()
+								.filter(m -> m.getMapUrl().equalsIgnoreCase(mapId))
+								.findFirst().orElse(null);
+						if (map != null) {
+							mapName = map.getDisplayName();
+							mapBg = map.getStylizedBackgroundImage();
+							mapPremier = map.getPremierBackgroundImage();
+						}
+					}
+
+					// Result & Score
+					String result = "DRAW"; // Default
+					String score = "0 - 0";
+					String teamId = player.getTeamId();
+
+					MatchDetailsResponse.Team myTeam = details.getTeams().stream()
+							.filter(t -> t.getTeamId().equals(teamId)).findFirst().orElse(null);
+					MatchDetailsResponse.Team enemyTeam = details.getTeams().stream()
+							.filter(t -> !t.getTeamId().equals(teamId)).findFirst().orElse(null);
+
+					if (myTeam != null) {
+						if (myTeam.isWon()) {
+							result = "VICTORY";
+							mapBg = mapPremier;
+						} else if (enemyTeam != null && enemyTeam.isWon()) {
+							result = "DEFEAT";
+						}
+
+						int myScore = myTeam.getRoundsWon();
+						int enemyScore = enemyTeam != null ? enemyTeam.getRoundsWon() : 0;
+						score = myScore + " - " + enemyScore;
+					}
+
+					// KDA
+					String kda = "0 / 0 / 0";
+					if (player.getStats() != null) {
+						kda = player.getStats().getKills() + " / " + player.getStats().getDeaths() + " / "
+								+ player.getStats().getAssists();
+					}
+
+					// Rank
+					String rankName = "Unrated";
+					String rankIcon = "";
+					if (details.getMatchInfo().isRanked() && tiers != null && tiers.getData() != null
+							&& !tiers.getData().isEmpty()) {
+						// Use latest tier set
+						CompetitiveTiersResponse.TierSet tierSet = tiers.getData().get(tiers.getData().size() - 1);
+						CompetitiveTiersResponse.Tier tier = tierSet.getTiers().stream()
+								.filter(t -> t.getTier() == player.getCompetitiveTier())
+								.findFirst().orElse(null);
+						if (tier != null) {
+							rankName = tier.getTierName();
+							rankIcon = tier.getLargeIcon();
+						}
+					}
+
+					matches.add(MatchHistory.Match.builder()
+							.matchId(historyItem.getMatchID())
+							.gameStartTime(historyItem.getGameStartTime())
+							.mapName(mapName)
+							.mapBg(mapBg)
+							.agentName(agentName)
+							.agentIcon(agentIcon)
+							.result(result)
+							.score(score)
+							.kda(kda)
+							.rankName(rankName)
+							.rankIcon(rankIcon)
+							.isRanked(details.getMatchInfo().isRanked())
+							.queueId(details.getMatchInfo().getQueueId())
+							.build());
+
+				} catch (Exception e) {
+					log.error("Error processing match " + historyItem.getMatchID(), e);
+				}
+			}
+		}
+
+		return MatchHistory.builder().matches(matches).build();
+	}
 }
