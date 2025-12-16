@@ -4,6 +4,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.rsmnarts.valoo.infrastructure.client.ValorantApiComClient;
+import com.rsmnarts.valoo.infrastructure.client.dto.ContentTierResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.DailyStoreLevelResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.VersionResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WeaponSkinResponse;
@@ -29,5 +30,10 @@ public class ValorantMetadataService {
 	@Cacheable(value = "all-daily-store")
 	public WeaponSkinResponse getAllWeaponSkins() {
 		return valorantApiComClient.getAllWeaponSkins();
+	}
+
+	@Cacheable(value = "content-tiers")
+	public ContentTierResponse getContentTiers() {
+		return valorantApiComClient.getContentTiers();
 	}
 }

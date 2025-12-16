@@ -29,7 +29,9 @@ public class NightMarket {
 		private String originalCost;
 		private String discountedCost;
 		private Double discountPercent;
+		private Tier tier;
 		private List<Level> levels;
+		private List<Chroma> chromas;
 
 		@Data
 		@Builder
@@ -40,6 +42,29 @@ public class NightMarket {
 			private String displayName;
 			private String displayIcon;
 			private String streamedVideo;
+		}
+
+		@Data
+		@Builder
+		@NoArgsConstructor
+		@AllArgsConstructor
+		public static class Chroma {
+			private String uuid;
+			private String displayName;
+			private String displayIcon;
+			private String swatch;
+			private String streamedVideo;
+		}
+
+		@Data
+		@Builder
+		@NoArgsConstructor
+		@AllArgsConstructor
+		public static class Tier {
+			private String uuid;
+			private String displayName;
+			private String displayIcon;
+			private String highlightColor;
 		}
 	}
 }

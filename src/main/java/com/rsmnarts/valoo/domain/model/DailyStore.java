@@ -27,7 +27,9 @@ public class DailyStore {
 		private String streamedVideo;
 		private String assetPath;
 		private String cost;
+		private Tier tier;
 		private List<Level> levels;
+		private List<Chroma> chromas;
 
 		@Data
 		@Builder
@@ -38,6 +40,29 @@ public class DailyStore {
 			private String displayName;
 			private String displayIcon;
 			private String streamedVideo;
+		}
+
+		@Data
+		@Builder
+		@NoArgsConstructor
+		@AllArgsConstructor
+		public static class Chroma {
+			private String uuid;
+			private String displayName;
+			private String displayIcon;
+			private String swatch;
+			private String streamedVideo;
+		}
+
+		@Data
+		@Builder
+		@NoArgsConstructor
+		@AllArgsConstructor
+		public static class Tier {
+			private String uuid;
+			private String displayName;
+			private String displayIcon;
+			private String highlightColor;
 		}
 	}
 }
