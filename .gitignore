@@ -34,3 +34,6 @@ build/
 
 ### Temp ###
 tmp
+
+### Generated files ###
+src/main/resources/static/css/style.css
