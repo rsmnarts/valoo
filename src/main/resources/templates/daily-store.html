@@ -1,50 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Valorant Weapon Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
-    <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
-    <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
-    <link rel="manifest" href="../static/favicon/site.webmanifest" th:href="@{/favicon/site.webmanifest}">
-    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}">
-    <!-- Matomo -->
-    <script>
-    var _paq = window._paq = window._paq || [];
-    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-    _paq.push(['trackPageView']);
-    _paq.push(['enableLinkTracking']);
-    (function() {
-        var u="//matomo.rsmnarts.com/";
-        _paq.push(['setTrackerUrl', u+'matomo.php']);
-        _paq.push(['setSiteId', '1']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-    })();
-    </script>
-    <!-- End Matomo Code -->
+<head th:replace="fragments/head :: head('Valorant Weapon Store')">
 </head>
 <body class="bg-valorant-base text-valorant-text-primary min-h-screen flex flex-col items-center p-5">
 
-    <div class="flex flex-col lg:flex-row justify-between items-center w-full max-w-7xl mb-10 border-b-2 border-valorant-red pb-4 gap-6 lg:gap-0">
-        <div id="store-header" class="flex w-full lg:w-auto justify-center lg:justify-start">
-            <h1 class="text-3xl lg:text-4xl text-valorant-red uppercase tracking-widest font-bold text-center lg:text-left">Daily Store</h1>
-        </div>
-        <div class="flex flex-col items-center w-full lg:w-auto">
-             <div id="store-countdown" class="text-valorant-text-primary text-lg font-mono font-bold text-center"></div>
-        </div>
-        <div id="player-name-tagline" class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center lg:space-x-4">
-            <div class="flex items-center justify-center">
-                <h2 id="player-name" class="text-xl lg:text-2xl text-valorant-text"></h2>
-                <h2 id="player-tagline" class="text-xl lg:text-2xl text-valorant-text-secondary ml-1"></h2>
-            </div>
-        </div>
-        <div class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center gap-3 lg:gap-0">
-            <a href="/stores/night-market" id="night-market-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Night Market</a>
-            <a href="/stores/match-history" id="match-history-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Matches</a>
-            <button id="logout-btn" class="w-full lg:w-auto bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
-        </div>
-    </div>
+    <div th:replace="fragments/header :: header('Daily Store', true)"></div>
 
     <div id="loading" class="text-2xl text-valorant-text-secondary mt-12 animate-pulse">Loading Store...</div>
     <div id="error" class="text-valorant-red text-xl text-center hidden"></div>
@@ -203,7 +163,37 @@
                 if (playerName && playerTagline) {
                     document.getElementById('player-name').textContent = playerName;
                     document.getElementById('player-tagline').textContent = '#' + playerTagline;
+                }
 
+                // Fetch Wallet
+                try {
+                    const responseWallet = await fetch(`/api/riot-valo/wallet/${puuid}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Entitlements-Token': entitlementsToken,
+                            'Region': 'ap'
+                        }
+                    });
+
+                    if (responseWallet.ok) {
+                        const jsonWallet = await responseWallet.json();
+                        const balances = jsonWallet.Balances || jsonWallet.data?.Balances;
+                        if (balances) {
+                             const vp = balances["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"] || 0;
+                             const rp = balances["e59aa87c-4cbf-517a-5983-6e81511be9b7"] || 0;
+                             const kc = balances["85ca954a-41f2-ce94-9b45-8ca3dd309006"] || 0;
+
+                             document.getElementById('wallet-vp').textContent = vp.toLocaleString();
+                             document.getElementById('wallet-rp').textContent = rp.toLocaleString();
+                             document.getElementById('wallet-kc').textContent = kc.toLocaleString();
+                             
+                             const walletContainer = document.getElementById('wallet-container');
+                             walletContainer.classList.remove('hidden');
+                             walletContainer.classList.add('flex');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch wallet:", e);
                 }
 
                 const responseWeaponSkins = await fetch(`/api/riot-valo/storefront/${puuid}/daily-store`, {
@@ -286,17 +276,17 @@
                                      }
                                 }
                                 
-                                buttons += `<button onclick="openVideo('${level.streamedVideo}')" class="inline-block mr-2 mb-2 w-8 h-8 flex items-center justify-center bg-white/5 border border-white/20 text-white text-xs font-bold hover:bg-valorant-red hover:border-valorant-red transition-all duration-200" title="${level.displayName || 'Level ' + (index + 1)}">${btnLabel}</button>`;
+                                buttons += `<button onclick="openVideo('${level.streamedVideo}')" class="inline-block mr-2 mb-2 w-6 h-6 flex items-center justify-center bg-white/5 border border-white/20 text-white text-xs font-bold hover:bg-valorant-red hover:border-valorant-red transition-all duration-200" title="${level.displayName || 'Level ' + (index + 1)}">${btnLabel}</button>`;
                             }
                         });
                         
                         if (buttons) {
-                             videoButtonHtml = `<div class="mt-4"><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Levels</p><div class="flex flex-wrap">${buttons}</div></div>`;
+                             videoButtonHtml = `<div><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Levels</p><div class="flex flex-wrap">${buttons}</div></div>`;
                         } else if (skin.streamedVideo) {
-                             videoButtonHtml = `<button onclick="openVideo('${skin.streamedVideo}')" class="inline-block mt-4 px-6 py-2 bg-valorant-red text-white text-sm font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
+                             videoButtonHtml = `<button onclick="openVideo('${skin.streamedVideo}')" class="inline-block px-6 py-2 bg-valorant-red text-white text-sm md:text-lg font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
                         }
                     } else if (videoUrl) {
-                        videoButtonHtml = `<button onclick="openVideo('${videoUrl}')" class="inline-block mt-4 px-6 py-2 bg-valorant-red text-white text-sm font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
+                        videoButtonHtml = `<button onclick="openVideo('${videoUrl}')" class="inline-block px-6 py-2 bg-valorant-red text-white text-sm md:text-lg font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
                     }
 
                     // Chromas
@@ -305,33 +295,40 @@
                         let swatches = '';
                         skin.chromas.forEach(chroma => {
                             if (chroma.swatch) {
-                                 swatches += `<img src="${chroma.swatch}" alt="${chroma.displayName}" class="w-4 h-4 rounded border border-white/20 hover:border-valorant-red cursor-pointer transition-all duration-200" onclick="changeCardImage(this, '${chroma.displayIcon}')" title="${chroma.displayName}">`;
+                                 swatches += `<img loading="lazy" src="${chroma.swatch}" alt="${chroma.displayName}" class="w-6 h-6 rounded border border-white/20 hover:border-valorant-red cursor-pointer transition-all duration-200" onclick="changeCardImage(this, '${chroma.displayIcon}')" title="${chroma.displayName}">`;
                             }
                         });
                         if (swatches) {
-                            chromaHtml = `<div class="mt-3"><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Variants</p><div class="flex flex-wrap gap-2">${swatches}</div></div>`;
+                            chromaHtml = `<div><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Variants</p><div class="flex flex-wrap gap-2">${swatches}</div></div>`;
                         }
                     }
 
                     // Tier
                     let tierHtml = '';
                     if (skin.tier && skin.tier.displayIcon) {
-                        tierHtml = `<img src="${skin.tier.displayIcon}" class="absolute top-3 right-3 w-10 h-10 drop-shadow-md z-10" title="${skin.tier.displayName}">`;
+                        tierHtml = `<img loading="lazy" src="${skin.tier.displayIcon}" class="absolute top-3 right-3 w-10 h-10 drop-shadow-md z-10" title="${skin.tier.displayName}">`;
                     }
 
                     card.innerHTML = `
                         <div class="relative w-full h-48 flex items-center justify-center bg-gradient-to-br from-[#2c353e] to-[#1c252e] p-4 overflow-hidden">
                             ${tierHtml}
-                            <img src="${displayIcon}" alt="${displayName}" class="card-main-image max-w-full max-h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-2" onerror="this.src='https://placehold.co/400x300'">
+                            <img loading="lazy" src="${displayIcon}" alt="${displayName}" class="card-main-image max-w-full max-h-full object-contain drop-shadow-xl transition-transform duration-300 group-hover:scale-110 group-hover:-rotate-2" onerror="this.src='https://placehold.co/400x300'">
                         </div>
                         <div class="p-5">
-                            <div class="text-lg font-bold mb-2 uppercase text-valorant-text-primary tracking-wide leading-tight min-h-[3.5rem]">${displayName}</div>
+                            <div class="text-xl font-bold mb-2 uppercase text-valorant-text-primary tracking-wide leading-tight min-h-[3.5rem]">${displayName}</div>
                             <div class="flex items-center text-base text-valorant-text-secondary mb-3">
-                                <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center text-xs text-white font-bold"><img src="${costIcon}" alt="vp" class="w-5 h-5"></span> ${cost}
+                                <span class="w-5 h-5 mr-2 rounded-full flex items-center justify-center text-xs text-white font-bold"><img loading="lazy" src="${costIcon}" alt="vp" class="w-5 h-5"></span> ${cost}
                             </div>
-                            
-                            ${chromaHtml}
-                            ${videoButtonHtml}
+
+                            <div class="flex justify-between items-start gap-4 mt-4 min-h-[50px]">
+                                <div class="flex-1">
+                                    ${chromaHtml}
+                                </div>
+                                <div class="flex-1 flex justify-end">
+                                    ${videoButtonHtml}
+                                </div>
+                            </div>
+
                         </div>
                     `;
                     gridEl.appendChild(card);

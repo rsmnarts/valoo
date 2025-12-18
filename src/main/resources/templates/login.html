@@ -1,28 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Riot Login</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}">
-    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
-    <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
-    <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
-    <link rel="manifest" href="../static/favicon/site.webmanifest" th:href="@{/favicon/site.webmanifest}">
-    <!-- Matomo -->
-    <script>
-    var _paq = window._paq = window._paq || [];
-    /* tracker methods like "setCustomDimension" should be called before "trackPageView" */
-    _paq.push(['trackPageView']);
-    _paq.push(['enableLinkTracking']);
-    (function() {
-        var u="//matomo.rsmnarts.com/";
-        _paq.push(['setTrackerUrl', u+'matomo.php']);
-        _paq.push(['setSiteId', '1']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-    })();
-    </script>
-    <!-- End Matomo Code -->
+<head th:replace="fragments/head :: head('Riot Login')">
 </head>
 <body class="bg-valorant-base text-valorant-text-primary min-h-screen flex items-center justify-center p-4">
     <div class="container w-full max-w-md bg-valorant-card p-8 rounded-lg shadow-2xl border border-white/10">
@@ -47,7 +25,7 @@
         <div class="step mb-6 border-t border-white/10 pt-6">
             <h3 class="text-xl font-semibold mb-2 text-white">Step 2: Paste Redirect URL</h3>
             <p class="text-valorant-text-secondary text-sm mb-4">Paste the URL starting with <code>https://playvalorant.com/opt_in</code> below.</p>
-            <input type="text" id="redirectUrl" placeholder="Paste URL here..." class="w-full p-3 bg-valorant-base border border-white/20 text-white rounded focus:border-valorant-red focus:outline-none transition-colors mb-4 placeholder-gray-600" />
+            <input type="text" id="redirectUrl" placeholder="Paste URL here..." autocomplete="false" class="w-full p-3 bg-valorant-base border border-white/20 text-white rounded focus:border-valorant-red focus:outline-none transition-colors mb-4 placeholder-gray-600" />
             <button onclick="submitUrl()" class="w-full py-3 bg-white/10 hover:bg-white/20 text-white font-bold uppercase tracking-wider transition-all duration-300 rounded border border-white/20 hover:border-white/50">
                 Submit
             </button>

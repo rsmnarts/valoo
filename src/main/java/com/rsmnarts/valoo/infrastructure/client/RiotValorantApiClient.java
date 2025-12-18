@@ -15,6 +15,7 @@ import com.rsmnarts.valoo.infrastructure.client.config.RiotClientConfig;
 import com.rsmnarts.valoo.infrastructure.client.dto.MatchDetailsResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.MatchHistoryResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
 
 import feign.Headers;
 
@@ -56,6 +57,15 @@ public interface RiotValorantApiClient {
 	MatchDetailsResponse getMatchDetails(
 			URI baseUrl,
 			@PathVariable("matchId") String matchId,
+			@RequestHeader("X-Riot-ClientPlatform") String clientPlatform,
+			@RequestHeader("X-Riot-ClientVersion") String clientVersion,
+			@RequestHeader("X-Riot-Entitlements-JWT") String entitlementsToken,
+			@RequestHeader("Authorization") String authorization);
+
+	@GetMapping("/store/v1/wallet/{puuid}")
+	WalletResponse getWallet(
+			URI baseUrl,
+			@PathVariable("puuid") String puuid,
 			@RequestHeader("X-Riot-ClientPlatform") String clientPlatform,
 			@RequestHeader("X-Riot-ClientVersion") String clientVersion,
 			@RequestHeader("X-Riot-Entitlements-JWT") String entitlementsToken,

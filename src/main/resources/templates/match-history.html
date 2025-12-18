@@ -1,48 +1,10 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head>
-    <title>Valorant Match History</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <link rel="apple-touch-icon" sizes="180x180" href="../static/favicon/apple-touch-icon.png" th:href="@{/favicon/apple-touch-icon.png}">
-    <link rel="icon" type="image/png" sizes="32x32" href="../static/favicon/favicon-32x32.png" th:href="@{/favicon/favicon-32x32.png}">
-    <link rel="icon" type="image/png" sizes="16x16" href="../static/favicon/favicon-16x16.png" th:href="@{/favicon/favicon-16x16.png}">
-    <link rel="manifest" href="../static/favicon/site.webmanifest" th:href="@{/favicon/site.webmanifest}">
-    <link rel="stylesheet" href="../static/css/style.css" th:href="@{/css/style.css}">
-    <!-- Matomo -->
-    <script>
-    var _paq = window._paq = window._paq || [];
-    _paq.push(['trackPageView']);
-    _paq.push(['enableLinkTracking']);
-    (function() {
-        var u="//matomo.rsmnarts.com/";
-        _paq.push(['setTrackerUrl', u+'matomo.php']);
-        _paq.push(['setSiteId', '1']);
-        var d=document, g=d.createElement('script'), s=d.getElementsByTagName('script')[0];
-        g.async=true; g.src=u+'matomo.js'; s.parentNode.insertBefore(g,s);
-    })();
-    </script>
-    <!-- End Matomo Code -->
+<head th:replace="fragments/head :: head('Valorant Match History')">
 </head>
 <body class="bg-valorant-base text-valorant-text-primary min-h-screen flex flex-col items-center p-5">
 
-    <div class="flex flex-col lg:flex-row justify-between items-center w-full max-w-7xl mb-10 border-b-2 border-valorant-red pb-4 gap-6 lg:gap-0">
-        <div id="store-header" class="flex w-full lg:w-auto justify-center lg:justify-start">
-            <h1 class="text-3xl lg:text-4xl text-valorant-red uppercase tracking-widest font-bold text-center lg:text-left">Match History</h1>
-        </div>
-        <div class="flex flex-col items-center w-full lg:w-auto">
-             <!-- Placeholder for stats or info if needed -->
-        </div>
-        <div id="player-name-tagline" class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center lg:space-x-4">
-            <div class="flex items-center justify-center">
-                <h2 id="player-name" class="text-xl lg:text-2xl text-valorant-text"></h2>
-                <h2 id="player-tagline" class="text-xl lg:text-2xl text-valorant-text-secondary ml-1"></h2>
-            </div>
-        </div>
-        <div class="flex flex-col lg:flex-row items-center w-full lg:w-auto justify-center gap-3 lg:gap-0">
-            <a href="/stores" id="stores-btn" class="w-full lg:w-auto text-center bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">Daily Store</a>
-            <button id="logout-btn" class="w-full lg:w-auto bg-transparent border border-valorant-red text-valorant-red px-6 py-3 uppercase tracking-wider hover:bg-valorant-red hover:text-white transition-colors duration-300 font-bold">LOGOUT</button>
-        </div>
-    </div>
+    <div th:replace="fragments/header :: header('Match History', false)"></div>
 
     <div id="loading" class="text-2xl text-valorant-text-secondary mt-12 animate-pulse">Loading Match History...</div>
     <div id="error" class="text-valorant-red text-xl text-center hidden"></div>
@@ -109,6 +71,37 @@
                     }
                 }
 
+                // Fetch Wallet
+                try {
+                    const responseWallet = await fetch(`/api/riot-valo/wallet/${puuid}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Entitlements-Token': entitlementsToken,
+                            'Region': 'ap'
+                        }
+                    });
+
+                    if (responseWallet.ok) {
+                        const jsonWallet = await responseWallet.json();
+                        const balances = jsonWallet.Balances || jsonWallet.data?.Balances;
+                        if (balances) {
+                             const vp = balances["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"] || 0;
+                             const rp = balances["e59aa87c-4cbf-517a-5983-6e81511be9b7"] || 0;
+                             const kc = balances["85ca954a-41f2-ce94-9b45-8ca3dd309006"] || 0;
+
+                             document.getElementById('wallet-vp').textContent = vp.toLocaleString();
+                             document.getElementById('wallet-rp').textContent = rp.toLocaleString();
+                             document.getElementById('wallet-kc').textContent = kc.toLocaleString();
+                             
+                             const walletContainer = document.getElementById('wallet-container');
+                             walletContainer.classList.remove('hidden');
+                             walletContainer.classList.add('flex');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch wallet:", e);
+                }
+
                 // Fetch Match History
                 const responseHistory = await fetch(`/api/riot-valo/storefront/${puuid}/match-history`, {
                     headers: {
@@ -157,29 +150,31 @@
                         <div class="relative z-10 flex flex-col md:flex-row items-center justify-between w-full p-4">
                             <div class="flex items-center gap-4 w-full md:w-1/3 mb-4 md:mb-0">
                                 <div class="relative w-16 h-16 shrink-0">
-                                    <img src="${match.agentIcon}" alt="${match.agentName}" class="w-full h-full object-cover rounded-full border-2 border-white/20 shadow-lg" onerror="this.src='https://placehold.co/64?text=?'">
+                                    <img loading="lazy" src="${match.agentIcon}" alt="${match.agentName}" class="w-full h-full object-cover rounded-full border-2 border-white/20 shadow-lg" onerror="this.src='https://placehold.co/64?text=?'">
                                     <div class="absolute -bottom-1 -right-1 bg-black/80 rounded text-xs px-2 py-0.5 text-white border border-white/20 shadow-sm">${match.agentName}</div>
                                 </div>
                                 <div class="flex flex-col">
-                                    <div class="text-lg font-bold text-white tracking-wide drop-shadow-md">${match.mapName}</div>
-                                    <div class="text-xs text-gray-300 font-mono">${date}</div>
-                                    <div class="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">${match.matchId || 'Unknown'}</div>
+                                    <span class="text-sm md:text-lg font-bold text-white tracking-wide drop-shadow-md">${match.mapName}</span>
+                                    <span class="text-[12px] text-gray-300 font-mono">${date}</span>
+                                    <span class="text-[10px]  font-bold text-gray-400 tracking-wider mt-1 cursor-pointer hover:text-white transition-colors truncate max-w-[150px]" 
+                                         onclick="navigator.clipboard.writeText('${match.matchId}'); this.textContent='Copied!'; setTimeout(() => this.textContent='${match.matchId}', 500);" 
+                                         title="Click to copy Match ID">${match.matchId || 'Unknown'}</span>
                                 </div>
                             </div>
 
                             <div class="flex flex-col items-center justify-center w-full md:w-1/3 mb-4 md:mb-0">
                                 <div class="text-2xl font-black tracking-widest ${isWin ? 'text-green-400' : (isLoss ? 'text-valorant-red' : 'text-gray-400')} drop-shadow-lg" style="text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${match.result}</div>
                                 <div class="text-4xl font-black text-white my-1 drop-shadow-xl" style="text-shadow: 0 2px 10px rgba(0,0,0,0.8);">${match.score}</div>
-                                <div class="text-sm font-bold text-gray-300 tracking-widest bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">KDA: <span class="text-white">${match.kda}</span></div>
+                                <div class="text-sm md:text-lg font-bold text-gray-300 tracking-widest bg-black/40 px-3 py-1 rounded-full backdrop-blur-sm border border-white/10">KDA: <span class="text-white">${match.kda}</span></div>
                             </div>
 
                             <div class="flex items-center justify-end gap-3 w-full md:w-1/3">
                                  ${match.ranked ? `
                                     <div class="text-right">
-                                        <div class="text-sm font-bold text-white drop-shadow-md">${match.rankName}</div>
+                                        <div class="text-sm md:text-lg  font-bold text-white drop-shadow-md">${match.rankName}</div>
                                     </div>
-                                    <img src="${match.rankIcon}" alt="${match.rankName}" class="w-12 h-12 object-contain drop-shadow-lg" onerror="this.style.display='none'">
-                                 ` : `<div class="text-sm text-gray-400 italic font-bold">Unrated</div>`}
+                                    <img loading="lazy" src="${match.rankIcon}" alt="${match.rankName}" class="w-12 h-12 object-contain drop-shadow-lg" onerror="this.style.display='none'">
+                                 ` : `<div class="text-sm md:text-lg  text-gray-400 italic font-bold">Unrated</div>`}
                             </div>
                         </div>
                     `;

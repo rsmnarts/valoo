@@ -30,6 +30,7 @@ import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse.SingleItemStoreOffer;
 import com.rsmnarts.valoo.infrastructure.client.dto.VersionResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WeaponSkinResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -306,7 +307,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 		MapsResponse maps = valorantMetadataService.getMaps();
 		CompetitiveTiersResponse tiers = valorantMetadataService.getCompetitiveTiers();
 
-		MatchHistoryResponse historyResponse = storeApiClient.getMatchHistory(getUrl(riotAuth.getShard()), puuid, 0, 5,
+		MatchHistoryResponse historyResponse = storeApiClient.getMatchHistory(getUrl(riotAuth.getShard()), puuid, 0, 20,
 				riotAuth.getClientPlatform(), riotAuth.getClientVersion(), riotAuth.getEntitlementsToken(),
 				riotAuth.getAuthorization());
 
@@ -428,5 +429,13 @@ public class RiotValorantService implements RiotValorantUseCase {
 		}
 
 		return MatchHistory.builder().matches(matches).build();
+	}
+
+	@Override
+	public WalletResponse getWallet(String puuid, String accessToken, String entitlementsToken, String region) {
+		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
+
+		return storeApiClient.getWallet(getUrl(riotAuth.getShard()), puuid, riotAuth.getClientPlatform(),
+				riotAuth.getClientVersion(), riotAuth.getEntitlementsToken(), riotAuth.getAuthorization());
 	}
 }

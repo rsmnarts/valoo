@@ -15,6 +15,7 @@ import com.rsmnarts.valoo.domain.model.NightMarket;
 import com.rsmnarts.valoo.domain.usecase.RiotValorantUseCase;
 import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
+import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -69,5 +70,14 @@ public class RiotValorantController {
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity
 				.ok(riotValoUseCase.getPlayerName(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+	}
+
+	@GetMapping("/wallet/{puuid}")
+	public ResponseEntity<WalletResponse> getWallet(@PathVariable String puuid,
+			@RequestHeader("Authorization") String accessToken,
+			@RequestHeader("Entitlements-Token") String entitlementsToken,
+			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
+		return ResponseEntity
+				.ok(riotValoUseCase.getWallet(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
 	}
 }
