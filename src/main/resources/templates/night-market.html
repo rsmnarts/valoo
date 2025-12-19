@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
+
 <head th:replace="~{fragments/head :: head('Valorant Night Market')}">
 </head>
+
 <body class="bg-valorant-base text-valorant-text-primary min-h-screen flex flex-col items-center p-5">
 
     <div th:replace="~{fragments/header :: header('Night Market', true)}"></div>
 
     <div id="loading" class="text-2xl text-valorant-text-secondary mt-12 animate-pulse">Loading Night Market...</div>
     <div id="error" class="text-valorant-red text-xl text-center hidden"></div>
-    <div id="weapons-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full max-w-7xl p-2"></div>
+    <div id="weapons-grid"
+        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6 w-full max-w-7xl p-2"></div>
 
     <div th:replace="~{fragments/modal :: video-modal}"></div>
     <div th:replace="~{fragments/scripts :: common-scripts}"></div>
@@ -20,9 +23,9 @@
             if (app.error) {
                 const errorEl = document.getElementById('error');
                 const loadingEl = document.getElementById('loading');
-                loadingEl.style.display = 'none';
+                loadingEl.classList.add('hidden');
                 errorEl.textContent = app.error;
-                errorEl.style.display = 'block';
+                errorEl.classList.remove('hidden');
                 setTimeout(logout, 2000);
                 return;
             }
@@ -44,7 +47,7 @@
                         'Region': 'ap'
                     }
                 });
-                
+
                 if (!responseNightMarket.ok) {
                     if (responseNightMarket.status === 401 || responseNightMarket.status === 403) {
                         logout();
@@ -56,7 +59,7 @@
                 const jsonResponse = (await responseNightMarket.json())?.data;
                 const skins = jsonResponse.items;
                 const expireAt = jsonResponse.expireAt;
-                
+
                 if (expireAt) {
                     const countdownEl = document.getElementById('store-countdown');
                     const updateCountdown = () => {
@@ -66,29 +69,29 @@
                             countdownEl.textContent = "EXPIRED";
                             return;
                         }
-                        const days = Math.floor(diff / 86400); 
+                        const days = Math.floor(diff / 86400);
                         const hours = Math.floor((diff % 86400) / 3600);
                         const minutes = Math.floor((diff % 3600) / 60);
                         const seconds = diff % 60;
-                        countdownEl.textContent = "Ends in: " + days + "d " + 
+                        countdownEl.textContent = "Ends in: " + days + "d " +
                             [hours, minutes, seconds].map(v => v < 10 ? "0" + v : v).join(":");
                     };
                     updateCountdown();
                     setInterval(updateCountdown, 1000);
                 }
 
-                loadingEl.style.display = 'none';
+                loadingEl.classList.add('hidden');
 
                 if (!skins || skins.length === 0) {
                     errorEl.textContent = 'Night Market is not currently available or empty.';
-                    errorEl.style.display = 'block';
+                    errorEl.classList.remove('hidden');
                     return;
                 }
 
                 skins.forEach(skin => {
                     const card = document.createElement('div');
                     card.className = 'bg-valorant-card rounded overflow-hidden relative border border-white/10 hover:-translate-y-1 hover:shadow-2xl hover:border-valorant-red transition-all duration-300 group';
-                    
+
                     const displayName = skin.displayName || 'Unknown Skin';
                     const displayIcon = skin.displayIcon || '';
                     const costIcon = skin.costIcon || 'https://media.valorant-api.com/currencies/85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741/displayicon.png';
@@ -98,7 +101,7 @@
                     const videoUrl = skin.streamedVideo;
 
                     let videoButtonHtml = '';
-                     if (skin.levels && skin.levels.length > 0) {
+                    if (skin.levels && skin.levels.length > 0) {
                         let buttons = '';
                         skin.levels.forEach((level, index) => {
                             if (level.streamedVideo) {
@@ -109,9 +112,9 @@
                             }
                         });
                         if (buttons) {
-                             videoButtonHtml = `<div><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Levels</p><div class="flex flex-wrap">${buttons}</div></div>`;
+                            videoButtonHtml = `<div><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Levels</p><div class="flex flex-wrap">${buttons}</div></div>`;
                         } else if (skin.streamedVideo) {
-                           videoButtonHtml = `<button onclick="openVideo('${skin.streamedVideo}')" class="inline-block px-6 py-2 bg-valorant-red text-white text-sm md:text-lg font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
+                            videoButtonHtml = `<button onclick="openVideo('${skin.streamedVideo}')" class="inline-block px-6 py-2 bg-valorant-red text-white text-sm md:text-lg font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
                         }
                     } else if (videoUrl) {
                         videoButtonHtml = `<button onclick="openVideo('${videoUrl}')" class="inline-block px-6 py-2 bg-valorant-red text-white text-sm md:text-lg font-bold uppercase tracking-wider hover:bg-red-700 transition-colors duration-300 rounded shadow-lg shadow-valorant-red/20">Watch Video</button>`;
@@ -157,11 +160,12 @@
 
             } catch (err) {
                 console.error(err);
-                loadingEl.style.display = 'none';
+                loadingEl.classList.add('hidden');
                 errorEl.textContent = 'Error loading Night Market: ' + err.message;
-                errorEl.style.display = 'block';
+                errorEl.classList.remove('hidden');
             }
         });
     </script>
 </body>
+
 </html>

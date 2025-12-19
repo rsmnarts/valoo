@@ -308,15 +308,17 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
-	@Cacheable(value = "getMatchHistory", key = "#puuid")
-	public MatchHistory getMatchHistory(String puuid, String accessToken, String entitlementsToken, String region) {
+	@Cacheable(value = "getMatchHistory", key = "#puuid + '-' + #startIndex + '-' + #endIndex")
+	public MatchHistory getMatchHistory(String puuid, int startIndex, int endIndex, String accessToken,
+			String entitlementsToken, String region) {
 		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
 
 		AgentsResponse agents = valorantMetadataService.getAgents();
 		MapsResponse maps = valorantMetadataService.getMaps();
 		CompetitiveTiersResponse tiers = valorantMetadataService.getCompetitiveTiers();
 
-		MatchHistoryResponse historyResponse = storeApiClient.getMatchHistory(getUrl(riotAuth.getShard()), puuid, 0, 20,
+		MatchHistoryResponse historyResponse = storeApiClient.getMatchHistory(getUrl(riotAuth.getShard()), puuid,
+				startIndex, endIndex,
 				riotAuth.getClientPlatform(), riotAuth.getClientVersion(), riotAuth.getEntitlementsToken(),
 				riotAuth.getAuthorization());
 
@@ -531,7 +533,12 @@ public class RiotValorantService implements RiotValorantUseCase {
 			}
 		}
 
-		return MatchHistory.builder().matches(matches).build();
+		return MatchHistory.builder()
+				.matches(matches)
+				.beginIndex(historyResponse.getBeginIndex())
+				.endIndex(historyResponse.getEndIndex())
+				.total(historyResponse.getTotal())
+				.build();
 	}
 
 	@Override

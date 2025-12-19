@@ -18,7 +18,8 @@ public interface RiotValorantUseCase {
 
 	NightMarket getNightMarket(String puuid, String accessToken, String entitlementsToken, String region);
 
-	MatchHistory getMatchHistory(String puuid, String accessToken, String entitlementsToken, String region);
+	MatchHistory getMatchHistory(String puuid, int startIndex, int endIndex, String accessToken, String entitlementsToken,
+			String region);
 
 	WalletResponse getWallet(String puuid, String accessToken, String entitlementsToken, String region);
 }

@@ -59,11 +59,11 @@
                 if (card) {
                     const img = card.querySelector('.card-main-image');
                     if (img) {
-                        img.style.opacity = '0';
+                        img.classList.add('opacity-0');
                         setTimeout(() => {
                             img.src = newSrc;
-                            img.onload = () => { img.style.opacity = '1'; };
-                            if (img.complete) { img.style.opacity = '1'; }
+                            img.onload = () => { img.classList.remove('opacity-0'); };
+                            if (img.complete) { img.classList.remove('opacity-0'); }
                         }, 200);
                     }
                 }
@@ -142,16 +142,25 @@
 
                 if (!modal || !video) return;
 
-                loader.style.display = 'flex';
+                const showLoader = () => {
+                    loader.classList.remove('hidden');
+                    loader.classList.add('flex');
+                };
+                const hideLoader = () => {
+                    loader.classList.add('hidden');
+                    loader.classList.remove('flex');
+                };
+
+                showLoader();
                 video.src = url;
 
-                video.onwaiting = () => { loader.style.display = 'flex'; };
-                video.onplaying = () => { loader.style.display = 'none'; };
-                video.oncanplay = () => { loader.style.display = 'none'; };
-                video.onloadstart = () => { loader.style.display = 'flex'; };
+                video.onwaiting = showLoader;
+                video.onplaying = hideLoader;
+                video.oncanplay = hideLoader;
+                video.onloadstart = showLoader;
 
                 modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                document.body.classList.add('overflow-hidden');
 
                 modal.onclick = function (e) {
                     if (e.target === modal) closeVideo();
@@ -168,7 +177,7 @@
                 video.onwaiting = video.onplaying = video.oncanplay = video.onloadstart = null;
 
                 modal.classList.remove('active');
-                document.body.style.overflow = '';
+                document.body.classList.remove('overflow-hidden');
             }
 
 
@@ -255,7 +264,7 @@
                 }
 
                 modal.classList.add('active');
-                document.body.style.overflow = 'hidden';
+                document.body.classList.add('overflow-hidden');
 
                 modal.onclick = function (e) {
                     if (e.target === modal) closeMatchDetails();
@@ -266,7 +275,7 @@
                 const modal = document.getElementById('match-details-modal');
                 if (!modal) return;
                 modal.classList.remove('active');
-                document.body.style.overflow = '';
+                document.body.classList.remove('overflow-hidden');
             }
 
             // Attach logout to button

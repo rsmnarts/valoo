@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.rsmnarts.valoo.domain.model.DailyStore;
@@ -55,11 +56,14 @@ public class RiotValorantController {
 
 	@GetMapping("/storefront/{puuid}/match-history")
 	public ResponseEntity<MatchHistory> getMatchHistory(@PathVariable String puuid,
+			@RequestParam(value = "startIndex", defaultValue = "0") int startIndex,
+			@RequestParam(value = "endIndex", defaultValue = "5") int endIndex,
 			@RequestHeader("Authorization") String accessToken,
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity.ok(riotValoUseCase
-				.getMatchHistory(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.getMatchHistory(puuid, startIndex, endIndex, accessToken.replace("Bearer ", "").trim(), entitlementsToken,
+						region));
 	}
 
 	@GetMapping("/players/{puuid}")

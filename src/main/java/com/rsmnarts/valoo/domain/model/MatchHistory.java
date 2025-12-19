@@ -13,6 +13,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class MatchHistory {
 	private List<Match> matches;
+	private int beginIndex;
+	private int endIndex;
+	private int total;
 
 	@Data
 	@Builder
