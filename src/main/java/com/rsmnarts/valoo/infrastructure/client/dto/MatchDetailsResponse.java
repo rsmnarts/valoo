@@ -2,11 +2,13 @@ package com.rsmnarts.valoo.infrastructure.client.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchDetailsResponse {
 	@JsonProperty("matchInfo")
 	private MatchInfo matchInfo;
@@ -16,6 +18,7 @@ public class MatchDetailsResponse {
 	private List<Team> teams;
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class MatchInfo {
 		@JsonProperty("matchId")
 		private String matchId;
@@ -31,11 +34,12 @@ public class MatchDetailsResponse {
 		private String gameMode;
 		@JsonProperty("isRanked")
 		private boolean isRanked;
-		@JsonProperty("queueId")
-		private String queueId;
+		@JsonProperty("queueID")
+		private String queueID;
 	}
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Player {
 		@JsonProperty("subject")
 		private String subject;
@@ -56,6 +60,7 @@ public class MatchDetailsResponse {
 	}
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Stats {
 		@JsonProperty("score")
 		private int score;
@@ -70,6 +75,7 @@ public class MatchDetailsResponse {
 	}
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class Team {
 		@JsonProperty("teamId")
 		private String teamId;

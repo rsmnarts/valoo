@@ -2,11 +2,13 @@ package com.rsmnarts.valoo.common.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class json {
 
-	private static final ObjectMapper objectMapper = new ObjectMapper();
+	private static final ObjectMapper objectMapper = new ObjectMapper()
+			.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
 	private json() {
 		// Private constructor to prevent instantiation
@@ -21,6 +23,20 @@ public class json {
 	public static byte[] Marshal(Object object) {
 		try {
 			return objectMapper.writeValueAsBytes(object);
+		} catch (JsonProcessingException e) {
+			throw new RuntimeException("Failed to marshal object to JSON", e);
+		}
+	}
+
+	/**
+	 * Converts an object to its JSON string representation.
+	 *
+	 * @param object The object to marshal.
+	 * @return The JSON string.
+	 */
+	public static String MarshalToString(Object object) {
+		try {
+			return objectMapper.writeValueAsString(object);
 		} catch (JsonProcessingException e) {
 			throw new RuntimeException("Failed to marshal object to JSON", e);
 		}

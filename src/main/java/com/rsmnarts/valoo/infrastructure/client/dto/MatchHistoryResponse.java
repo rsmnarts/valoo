@@ -2,11 +2,13 @@ package com.rsmnarts.valoo.infrastructure.client.dto;
 
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import lombok.Data;
 
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class MatchHistoryResponse {
 	@JsonProperty("Subject")
 	private String subject;
@@ -20,6 +22,7 @@ public class MatchHistoryResponse {
 	private List<History> history;
 
 	@Data
+	@JsonIgnoreProperties(ignoreUnknown = true)
 	public static class History {
 		@JsonProperty("MatchID")
 		private String matchID;

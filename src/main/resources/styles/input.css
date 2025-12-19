@@ -23,6 +23,7 @@ body { font-family: 'Kanit', sans-serif; }
 #video-modal.active {
 		display: flex;
 		opacity: 1;
+		pointer-events: auto;
 }
 #video-content-wrapper {
 		position: relative;
@@ -33,6 +34,11 @@ body { font-family: 'Kanit', sans-serif; }
 		border-radius: 8px;
 		box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 		padding: 4px;
+		transform: scale(0.95);
+		transition: transform 0.3s ease;
+}
+#video-modal.active #video-content-wrapper {
+		transform: scale(1);
 }
 #modal-close-btn {
 		position: absolute;
@@ -62,4 +68,24 @@ body { font-family: 'Kanit', sans-serif; }
 		justify-content: center;
 		background-color: rgba(0, 0, 0, 0.5);
 		z-index: 20;
+}
+
+.bg-valorant-card {
+    background-color: #1a1a1a;
+}
+
+.text-valorant-red {
+    color: #ff4655;
+}
+
+.border-valorant-red {
+    border-color: #ff4655;
+}
+
+.bg-valorant-red {
+    background-color: #ff4655;
+}
+
+.hover\:bg-valorant-red:hover {
+    background-color: #ff4655;
 }

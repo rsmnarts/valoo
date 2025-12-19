@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<body>
+    <div th:fragment="common-scripts">
+        <script>
+            /**
+             * Common utility for logging out and cleaning up localStorage
+             */
+            function logout() {
+                localStorage.removeItem('valorant_puuid');
+                localStorage.removeItem('valorant_access_token');
+                localStorage.removeItem('valorant_entitlements_token');
+                window.location.href = '/?logout=true';
+            }
+
+            /**
+             * Initialize application state, check for tokens and PUUID
+             */
+            function initApp() {
+                const urlParams = new URLSearchParams(window.location.search);
+                let puuid = urlParams.get('puuid');
+                const puuidStored = localStorage.getItem('valorant_puuid');
+                const accessToken = localStorage.getItem('valorant_access_token');
+                const entitlementsToken = localStorage.getItem('valorant_entitlements_token');
+
+                if (!accessToken || !entitlementsToken) {
+                    logout();
+                    return null;
+                }
+
+                if (!puuid) {
+                    if (!puuidStored) {
+                        return { error: 'User ID (puuid) is missing.' };
+                    }
+                    puuid = puuidStored;
+                } else {
+                    // Update stored PUUID if it's in the URL
+                    localStorage.setItem('valorant_puuid', puuid);
+                }
+
+                // Update navigation links with PUUID
+                ['daily-store-btn', 'night-market-btn', 'match-history-btn'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) {
+                        const baseUrl = el.getAttribute('href').split('?')[0];
+                        el.href = `${baseUrl}?puuid=${puuid}`;
+                    }
+                });
+
+                return { puuid, accessToken, entitlementsToken };
+            }
+
+            /**
+             * Change card image (used for skin chromas)
+             */
+            function changeCardImage(el, newSrc) {
+                const card = el.closest('.group');
+                if (card) {
+                    const img = card.querySelector('.card-main-image');
+                    if (img) {
+                        img.style.opacity = '0';
+                        setTimeout(() => {
+                            img.src = newSrc;
+                            img.onload = () => { img.style.opacity = '1'; };
+                            if (img.complete) { img.style.opacity = '1'; }
+                        }, 200);
+                    }
+                }
+            }
+
+            /**
+             * Fetch and display player wallet information
+             */
+            async function fetchWallet(puuid, accessToken, entitlementsToken) {
+                try {
+                    const response = await fetch(`/api/riot-valo/wallet/${puuid}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Entitlements-Token': entitlementsToken,
+                            'Region': 'ap'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const json = await response.json();
+                        const balances = json.Balances || json.data?.Balances;
+                        if (balances) {
+                            const vp = balances["85ad13f7-3d1b-5128-9eb2-7cd8ee0b5741"] || 0;
+                            const rp = balances["e59aa87c-4cbf-517a-5983-6e81511be9b7"] || 0;
+                            const kc = balances["85ca954a-41f2-ce94-9b45-8ca3dd309006"] || 0;
+
+                            document.getElementById('wallet-vp').textContent = vp.toLocaleString();
+                            document.getElementById('wallet-rp').textContent = rp.toLocaleString();
+                            document.getElementById('wallet-kc').textContent = kc.toLocaleString();
+
+                            const walletContainer = document.getElementById('wallet-container');
+                            walletContainer.classList.remove('hidden');
+                            walletContainer.classList.add('flex');
+                        }
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch wallet:", e);
+                }
+            }
+
+            /**
+             * Fetch and display player identity
+             */
+            async function fetchPlayerInfo(puuid, accessToken, entitlementsToken) {
+                try {
+                    const response = await fetch(`/api/riot-valo/players/${puuid}`, {
+                        headers: {
+                            'Authorization': 'Bearer ' + accessToken,
+                            'Entitlements-Token': entitlementsToken,
+                            'Region': 'ap'
+                        }
+                    });
+
+                    if (response.ok) {
+                        const json = await response.json();
+                        const playerName = json.data?.[0]?.GameName;
+                        const playerTagline = json.data?.[0]?.TagLine;
+
+                        if (playerName && playerTagline) {
+                            document.getElementById('player-name').textContent = playerName;
+                            document.getElementById('player-tagline').textContent = '#' + playerTagline;
+                        }
+                    } else if (response.status === 401 || response.status === 403) {
+                        logout();
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch player info:", e);
+                }
+            }
+
+            // Video Modal Control
+            function openVideo(url) {
+                const modal = document.getElementById('video-modal');
+                const video = document.getElementById('modal-video');
+                const loader = document.getElementById('video-loader');
+
+                if (!modal || !video) return;
+
+                loader.style.display = 'flex';
+                video.src = url;
+
+                video.onwaiting = () => { loader.style.display = 'flex'; };
+                video.onplaying = () => { loader.style.display = 'none'; };
+                video.oncanplay = () => { loader.style.display = 'none'; };
+                video.onloadstart = () => { loader.style.display = 'flex'; };
+
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                modal.onclick = function (e) {
+                    if (e.target === modal) closeVideo();
+                };
+            }
+
+            function closeVideo() {
+                const modal = document.getElementById('video-modal');
+                const video = document.getElementById('modal-video');
+                if (!modal || !video) return;
+
+                video.pause();
+                video.src = '';
+                video.onwaiting = video.onplaying = video.oncanplay = video.onloadstart = null;
+
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+
+            // Match Details Modal Control
+            function openMatchDetails(matchJson) {
+                const match = typeof matchJson === 'string' ? JSON.parse(matchJson) : matchJson;
+                const modal = document.getElementById('match-details-modal');
+                if (!modal) return;
+
+                // Header info
+                document.getElementById('match-details-header').style.backgroundImage = `url('${match.mapBg}')`;
+                document.getElementById('md-map-name').textContent = match.mapName;
+                document.getElementById('md-result').textContent = match.result;
+                document.getElementById('md-score').textContent = match.score;
+
+                // Status colors
+                const resultEl = document.getElementById('md-result');
+                resultEl.className = `text-2xl font-black tracking-widest ${match.result === 'VICTORY' ? 'text-green-400' : (match.result === 'DEFEAT' ? 'text-valorant-red' : 'text-gray-400')}`;
+
+                const duration = Math.floor(match.durationMillis / 60000);
+                const seconds = Math.floor((match.durationMillis % 60000) / 1000);
+                const date = new Date(match.gameStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                document.getElementById('md-game-info').textContent = `${match.queueID?.toUpperCase() || 'Unknown'} • ${date} • ${duration}m ${seconds}s`;
+
+                // Players list
+                const friendlyList = document.querySelector('#team-friendly .players-list');
+                const enemyList = document.querySelector('#team-enemy .players-list');
+                friendlyList.innerHTML = '';
+                enemyList.innerHTML = '';
+
+                // Find user's team ID
+                const userPuuid = localStorage.getItem('valorant_puuid');
+                const userPlayer = match.players ? match.players.find(p => p.subject === userPuuid) : null;
+                const myTeamId = userPlayer ? userPlayer.teamId : (match.players && match.players.length > 0 ? match.players[0].teamId : '');
+
+                if (match.players) {
+                    // Sort players by score
+                    const sortedPlayers = [...match.players].sort((a, b) => b.score - a.score);
+
+                    sortedPlayers.forEach(p => {
+                        const row = document.createElement('div');
+                        const isMe = p.subject === userPuuid;
+                        row.className = `flex items-center justify-between p-2 rounded ${isMe ? 'bg-white/10 border border-white/20' : 'bg-black/20 hover:bg-black/40'} transition-colors gap-2`;
+
+                        let mvpTag = '';
+                        if (p.matchMVP) {
+                            mvpTag = '<span class="text-[9px] font-black bg-yellow-400 text-black px-1 rounded ml-1 uppercase shrink-0">Match MVP</span>';
+                        } else if (p.teamMVP) {
+                            mvpTag = '<span class="text-[9px] font-black bg-gray-300 text-black px-1 rounded ml-1 uppercase shrink-0">Team MVP</span>';
+                        }
+
+                        row.innerHTML = `
+                            <div class="flex items-center gap-3 flex-1 min-w-0">
+                                <img src="${p.agentIcon}" class="w-10 h-10 rounded-full bg-black/40 border border-white/10" title="${p.agentName}">
+                                <div class="flex flex-col min-w-0">
+                                    <div class="flex items-center">
+                                        <span class="font-bold text-sm text-white truncate ${isMe ? 'text-yellow-400' : ''}">${p.gameName}</span>
+                                        ${mvpTag}
+                                    </div>
+                                    <span class="text-[10px] text-gray-400 font-mono">#${p.tagLine}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4 text-center shrink-0">
+                                <div class="w-16">
+                                    <div class="text-[10px] uppercase text-gray-500 font-bold">Score</div>
+                                    <div class="text-sm font-bold text-white">${p.score.toLocaleString()}</div>
+                                </div>
+                                <div class="w-24">
+                                    <div class="text-[10px] uppercase text-gray-500 font-bold">K D A</div>
+                                    <div class="text-sm font-bold text-white">${p.kills}/${p.deaths}/${p.assists}</div>
+                                </div>
+                                <div class="w-12 flex justify-center">
+                                    <img src="${p.rankIcon}" class="w-8 h-8 object-contain" title="${p.rankName}">
+                                </div>
+                            </div>
+                        `;
+
+                        if (p.teamId === myTeamId) {
+                            friendlyList.appendChild(row);
+                        } else {
+                            enemyList.appendChild(row);
+                        }
+                    });
+                }
+
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+
+                modal.onclick = function (e) {
+                    if (e.target === modal) closeMatchDetails();
+                };
+            }
+
+            function closeMatchDetails() {
+                const modal = document.getElementById('match-details-modal');
+                if (!modal) return;
+                modal.classList.remove('active');
+                document.body.style.overflow = '';
+            }
+
+            // Attach logout to button
+            document.addEventListener('DOMContentLoaded', () => {
+                const logoutBtn = document.getElementById('logout-btn');
+                if (logoutBtn) {
+                    logoutBtn.addEventListener('click', logout);
+                }
+            });
+        </script>
+    </div>
+</body>
+
+</html>

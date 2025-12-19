@@ -7,6 +7,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -33,16 +34,19 @@ import com.rsmnarts.valoo.infrastructure.client.dto.VersionResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WeaponSkinResponse;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class RiotValorantService implements RiotValorantUseCase {
 
 	private final RiotValorantApiClient storeApiClient;
 	private final ValorantMetadataService valorantMetadataService;
+
+	public RiotValorantService(RiotValorantApiClient storeApiClient, ValorantMetadataService valorantMetadataService) {
+		this.storeApiClient = storeApiClient;
+		this.valorantMetadataService = valorantMetadataService;
+	}
 
 	private String determineShard(String region) {
 		if (region == null) {
@@ -92,6 +96,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getStorefront", key = "#puuid")
 	public StorefrontResponse getStorefront(String puuid, String accessToken, String entitlementsToken, String region) {
 		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
 
@@ -102,6 +107,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getDailyStores", key = "#puuid")
 	public DailyStore getDailyStores(String puuid, String accessToken, String entitlementsToken, String region) {
 
 		StorefrontResponse storefrontResponse = getStorefront(puuid, accessToken, entitlementsToken, region);
@@ -195,6 +201,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getPlayerName", key = "#puuid")
 	public List<PlayerNameResponse> getPlayerName(String puuid, String accessToken, String entitlementsToken,
 			String region) {
 		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
@@ -210,6 +217,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getNightMarket", key = "#puuid")
 	public NightMarket getNightMarket(String puuid, String accessToken, String entitlementsToken, String region) {
 		StorefrontResponse storefrontResponse = getStorefront(puuid, accessToken, entitlementsToken, region);
 		List<NightMarket.NightMarketItem> nightMarketItems = new java.util.ArrayList<>();
@@ -300,6 +308,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getMatchHistory", key = "#puuid")
 	public MatchHistory getMatchHistory(String puuid, String accessToken, String entitlementsToken, String region) {
 		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
 
@@ -395,7 +404,6 @@ public class RiotValorantService implements RiotValorantUseCase {
 					String rankIcon = "";
 					if (details.getMatchInfo().isRanked() && tiers != null && tiers.getData() != null
 							&& !tiers.getData().isEmpty()) {
-						// Use latest tier set
 						CompetitiveTiersResponse.TierSet tierSet = tiers.getData().get(tiers.getData().size() - 1);
 						CompetitiveTiersResponse.Tier tier = tierSet.getTiers().stream()
 								.filter(t -> t.getTier() == player.getCompetitiveTier())
@@ -406,9 +414,100 @@ public class RiotValorantService implements RiotValorantUseCase {
 						}
 					}
 
+					// Players list for details
+					List<MatchHistory.MatchPlayer> matchPlayers = new ArrayList<>();
+					int maxScore = 0;
+					int maxBlueScore = 0;
+					int maxRedScore = 0;
+
+					// First pass to find max scores
+					for (MatchDetailsResponse.Player p : details.getPlayers()) {
+						if (p.getStats() == null)
+							continue;
+						int s = p.getStats().getScore();
+						if (s > maxScore)
+							maxScore = s;
+						if ("Blue".equalsIgnoreCase(p.getTeamId())) {
+							if (s > maxBlueScore)
+								maxBlueScore = s;
+						} else if ("Red".equalsIgnoreCase(p.getTeamId())) {
+							if (s > maxRedScore)
+								maxRedScore = s;
+						}
+					}
+
+					for (MatchDetailsResponse.Player p : details.getPlayers()) {
+						String pAgentName = "Unknown";
+						String pAgentIcon = "";
+						if (agents != null && agents.getData() != null) {
+							String charId = p.getCharacterId();
+							AgentsResponse.Agent agent = agents.getData().stream()
+									.filter(a -> a.getUuid().equalsIgnoreCase(charId))
+									.findFirst().orElse(null);
+							if (agent != null) {
+								pAgentName = agent.getDisplayName();
+								pAgentIcon = agent.getDisplayIcon();
+							}
+						}
+
+						String pRankName = "Unrated";
+						String pRankIcon = "";
+						if (tiers != null && tiers.getData() != null && !tiers.getData().isEmpty()) {
+							CompetitiveTiersResponse.TierSet tierSet = tiers.getData().get(tiers.getData().size() - 1);
+							CompetitiveTiersResponse.Tier tier = tierSet.getTiers().stream()
+									.filter(t -> t.getTier() == p.getCompetitiveTier())
+									.findFirst().orElse(null);
+							if (tier != null) {
+								pRankName = tier.getTierName();
+								pRankIcon = tier.getSmallIcon();
+							}
+						}
+
+						int pScore = p.getStats() != null ? p.getStats().getScore() : 0;
+						boolean isMatchMVP = pScore > 0 && pScore == maxScore;
+						boolean isTeamMVP = false;
+						if (pScore > 0) {
+							if ("Blue".equalsIgnoreCase(p.getTeamId())) {
+								isTeamMVP = pScore == maxBlueScore;
+							} else if ("Red".equalsIgnoreCase(p.getTeamId())) {
+								isTeamMVP = pScore == maxRedScore;
+							}
+						}
+
+						matchPlayers.add(MatchHistory.MatchPlayer.builder()
+								.subject(p.getSubject())
+								.gameName(p.getGameName())
+								.tagLine(p.getTagLine())
+								.teamId(p.getTeamId())
+								.agentName(pAgentName)
+								.agentIcon(pAgentIcon)
+								.kills(p.getStats() != null ? p.getStats().getKills() : 0)
+								.deaths(p.getStats() != null ? p.getStats().getDeaths() : 0)
+								.assists(p.getStats() != null ? p.getStats().getAssists() : 0)
+								.score(pScore)
+								.rankName(pRankName)
+								.rankIcon(pRankIcon)
+								.matchMVP(isMatchMVP)
+								.teamMVP(isTeamMVP)
+								.build());
+					}
+
+					// User MVP status
+					int s = player.getStats() != null ? player.getStats().getScore() : 0;
+					boolean userMatchMVP = s > 0 && s == maxScore;
+					boolean userTeamMVP = false;
+					if (s > 0) {
+						if ("Blue".equalsIgnoreCase(player.getTeamId())) {
+							userTeamMVP = s == maxBlueScore;
+						} else if ("Red".equalsIgnoreCase(player.getTeamId())) {
+							userTeamMVP = s == maxRedScore;
+						}
+					}
+
 					matches.add(MatchHistory.Match.builder()
 							.matchId(historyItem.getMatchID())
-							.gameStartTime(historyItem.getGameStartTime())
+							.gameStartTime(details.getMatchInfo().getGameStartMillis())
+							.durationMillis(details.getMatchInfo().getGameLengthMillis())
 							.mapName(mapName)
 							.mapBg(mapBg)
 							.agentName(agentName)
@@ -419,7 +518,11 @@ public class RiotValorantService implements RiotValorantUseCase {
 							.rankName(rankName)
 							.rankIcon(rankIcon)
 							.isRanked(details.getMatchInfo().isRanked())
-							.queueId(details.getMatchInfo().getQueueId())
+							.queueID(details.getMatchInfo().getQueueID())
+							.gameMode(details.getMatchInfo().getGameMode())
+							.matchMVP(userMatchMVP)
+							.teamMVP(userTeamMVP)
+							.players(matchPlayers)
 							.build());
 
 				} catch (Exception e) {
@@ -432,6 +535,7 @@ public class RiotValorantService implements RiotValorantUseCase {
 	}
 
 	@Override
+	@Cacheable(value = "getWallet", key = "#puuid")
 	public WalletResponse getWallet(String puuid, String accessToken, String entitlementsToken, String region) {
 		RiotAuth riotAuth = getRiotAuth(accessToken, entitlementsToken, region);
 
