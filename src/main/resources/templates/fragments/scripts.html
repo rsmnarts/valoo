@@ -242,12 +242,18 @@
                             </div>
                             <div class="flex items-center gap-4 text-center shrink-0">
                                 <div class="w-16">
+                                    <div class="text-[10px] uppercase text-gray-500 font-bold">RR</div>
+                                    <div class="text-sm font-bold ${p.rankedRatingEarned != null ? (p.rankedRatingEarned >= 0 ? 'text-green-400' : 'text-valorant-red') : 'text-gray-500'}">
+                                        ${p.rankedRatingEarned != null ? (p.rankedRatingEarned >= 0 ? '+' : '') + p.rankedRatingEarned : '-'}
+                                    </div>
+                                </div>
+                                <div class="w-16">
                                     <div class="text-[10px] uppercase text-gray-500 font-bold">Score</div>
                                     <div class="text-sm font-bold text-white">${p.score.toLocaleString()}</div>
                                 </div>
-                                <div class="w-24">
+                                <div class="w-20">
                                     <div class="text-[10px] uppercase text-gray-500 font-bold">K D A</div>
-                                    <div class="text-sm font-bold text-white">${p.kills}/${p.deaths}/${p.assists}</div>
+                                    <div class="text-xs font-bold text-white">${p.kills}/${p.deaths}/${p.assists}</div>
                                 </div>
                                 <div class="w-12 flex justify-center">
                                     <img src="${p.rankIcon}" class="w-8 h-8 object-contain" title="${p.rankName}">
@@ -270,6 +276,12 @@
                     if (e.target === modal) closeMatchDetails();
                 };
             }
+
+            document.addEventListener('keydown', () => {
+                if (event.key === 'Escape') {
+                    closeMatchDetails();
+                }
+            });
 
             function closeMatchDetails() {
                 const modal = document.getElementById('match-details-modal');

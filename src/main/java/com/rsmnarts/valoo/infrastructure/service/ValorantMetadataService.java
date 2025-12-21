@@ -21,42 +21,42 @@ public class ValorantMetadataService {
 
 	private final ValorantApiComClient valorantApiComClient;
 
-	@Cacheable("valorant-version")
+	@Cacheable(value = "valorant-version", unless = "#result == null")
 	public VersionResponse getVersion() {
 		return valorantApiComClient.getVersion();
 	}
 
-	@Cacheable(value = "weapon-skin-details", key = "#uuid")
+	@Cacheable(value = "weapon-skin-details", key = "#uuid", unless = "#result == null")
 	public DailyStoreLevelResponse getDailyStore(String uuid) {
 		return valorantApiComClient.getWeaponsSkins(uuid);
 	}
 
-	@Cacheable(value = "all-daily-store")
+	@Cacheable(value = "all-daily-store", unless = "#result == null")
 	public WeaponSkinResponse getAllWeaponSkins() {
 		return valorantApiComClient.getAllWeaponSkins();
 	}
 
-	@Cacheable(value = "content-tiers")
+	@Cacheable(value = "content-tiers", unless = "#result == null")
 	public ContentTierResponse getContentTiers() {
 		return valorantApiComClient.getContentTiers();
 	}
 
-	@Cacheable(value = "agents")
+	@Cacheable(value = "agents", unless = "#result == null")
 	public AgentsResponse getAgents() {
 		return valorantApiComClient.getAgents();
 	}
 
-	@Cacheable(value = "maps")
+	@Cacheable(value = "maps", unless = "#result == null")
 	public MapsResponse getMaps() {
 		return valorantApiComClient.getMaps();
 	}
 
-	@Cacheable(value = "competitive-tiers")
+	@Cacheable(value = "competitive-tiers", unless = "#result == null")
 	public CompetitiveTiersResponse getCompetitiveTiers() {
 		return valorantApiComClient.getCompetitiveTiers();
 	}
 
-	@Cacheable(value = "currency")
+	@Cacheable(value = "currency", unless = "#result == null")
 	public CurrencyByIdResponse getCurrency(String id) {
 		return valorantApiComClient.getCurrency(id);
 	}

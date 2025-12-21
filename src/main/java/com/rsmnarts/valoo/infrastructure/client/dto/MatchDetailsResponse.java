@@ -33,7 +33,7 @@ public class MatchDetailsResponse {
 		@JsonProperty("gameMode")
 		private String gameMode;
 		@JsonProperty("isRanked")
-		private boolean isRanked;
+		private Boolean isRanked;
 		@JsonProperty("queueID")
 		private String queueID;
 	}
@@ -80,7 +80,7 @@ public class MatchDetailsResponse {
 		@JsonProperty("teamId")
 		private String teamId;
 		@JsonProperty("won")
-		private boolean won;
+		private Boolean won;
 		@JsonProperty("roundsPlayed")
 		private int roundsPlayed;
 		@JsonProperty("roundsWon")

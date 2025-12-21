@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,6 +15,7 @@ import com.rsmnarts.valoo.domain.model.DailyStore;
 import com.rsmnarts.valoo.domain.model.MatchHistory;
 import com.rsmnarts.valoo.domain.model.NightMarket;
 import com.rsmnarts.valoo.domain.usecase.RiotValorantUseCase;
+import com.rsmnarts.valoo.infrastructure.client.dto.CompetitiveUpdatesResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
@@ -33,7 +35,7 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity
-				.ok(riotValoUseCase.getStorefront(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.ok(riotValoUseCase.getStorefront(puuid, cleanToken(accessToken), entitlementsToken, region));
 	}
 
 	@GetMapping("/storefront/{puuid}/daily-store")
@@ -42,7 +44,7 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity.ok(riotValoUseCase
-				.getDailyStores(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.getDailyStores(puuid, cleanToken(accessToken), entitlementsToken, region));
 	}
 
 	@GetMapping("/storefront/{puuid}/night-market")
@@ -51,7 +53,7 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity.ok(riotValoUseCase
-				.getNightMarket(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.getNightMarket(puuid, cleanToken(accessToken), entitlementsToken, region));
 	}
 
 	@GetMapping("/storefront/{puuid}/match-history")
@@ -62,8 +64,17 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity.ok(riotValoUseCase
-				.getMatchHistory(puuid, startIndex, endIndex, accessToken.replace("Bearer ", "").trim(), entitlementsToken,
+				.getMatchHistory(puuid, startIndex, endIndex, cleanToken(accessToken), entitlementsToken,
 						region));
+	}
+
+	@PostMapping("/match-history/{puuid}/refresh")
+	public ResponseEntity<Void> forceRefreshMatchHistory(@PathVariable String puuid,
+			@RequestHeader("Authorization") String accessToken,
+			@RequestHeader("Entitlements-Token") String entitlementsToken,
+			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
+		riotValoUseCase.forceRefreshMatchHistory(puuid, cleanToken(accessToken), entitlementsToken, region);
+		return ResponseEntity.ok().build();
 	}
 
 	@GetMapping("/players/{puuid}")
@@ -73,7 +84,7 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity
-				.ok(riotValoUseCase.getPlayerName(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.ok(riotValoUseCase.getPlayerName(puuid, cleanToken(accessToken), entitlementsToken, region));
 	}
 
 	@GetMapping("/wallet/{puuid}")
@@ -82,6 +93,28 @@ public class RiotValorantController {
 			@RequestHeader("Entitlements-Token") String entitlementsToken,
 			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
 		return ResponseEntity
-				.ok(riotValoUseCase.getWallet(puuid, accessToken.replace("Bearer ", "").trim(), entitlementsToken, region));
+				.ok(riotValoUseCase.getWallet(puuid, cleanToken(accessToken), entitlementsToken, region));
+	}
+
+	@GetMapping("/competitive-updates/{puuid}")
+	public ResponseEntity<CompetitiveUpdatesResponse> getCompetitiveUpdates(@PathVariable String puuid,
+			@RequestHeader("Authorization") String accessToken,
+			@RequestHeader("Entitlements-Token") String entitlementsToken,
+			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
+		return ResponseEntity.ok(riotValoUseCase.getCompetitiveUpdates(puuid, cleanToken(accessToken),
+				entitlementsToken, region));
+	}
+
+	@GetMapping("/player/{puuid}")
+	public ResponseEntity<PlayerNameResponse> getPlayer(@PathVariable String puuid,
+			@RequestHeader("Authorization") String accessToken,
+			@RequestHeader("Entitlements-Token") String entitlementsToken,
+			@RequestHeader(value = "Region", defaultValue = "ap") String region) {
+		return ResponseEntity
+				.ok(riotValoUseCase.getPlayer(puuid, cleanToken(accessToken), entitlementsToken, region));
+	}
+
+	private String cleanToken(String token) {
+		return token != null ? token.replace("Bearer ", "").trim() : "";
 	}
 }

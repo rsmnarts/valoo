@@ -70,4 +70,25 @@ public interface RiotValorantApiClient {
 			@RequestHeader("X-Riot-ClientVersion") String clientVersion,
 			@RequestHeader("X-Riot-Entitlements-JWT") String entitlementsToken,
 			@RequestHeader("Authorization") String authorization);
+
+	@GetMapping("/mmr/v1/players/{puuid}/competitiveupdates")
+	String getCompetitiveUpdates(
+			URI baseUrl,
+			@PathVariable("puuid") String puuid,
+			@RequestParam("startIndex") int startIndex,
+			@RequestParam("endIndex") int endIndex,
+			@RequestParam(value = "queue", required = false, defaultValue = "all") String queue,
+			@RequestHeader("X-Riot-ClientPlatform") String clientPlatform,
+			@RequestHeader("X-Riot-ClientVersion") String clientVersion,
+			@RequestHeader("X-Riot-Entitlements-JWT") String entitlementsToken,
+			@RequestHeader("Authorization") String authorization);
+
+	@GetMapping("/mmr/v1/players/{puuid}")
+	String getMMR(
+			URI baseUrl,
+			@PathVariable("puuid") String puuid,
+			@RequestHeader("X-Riot-ClientPlatform") String clientPlatform,
+			@RequestHeader("X-Riot-ClientVersion") String clientVersion,
+			@RequestHeader("X-Riot-Entitlements-JWT") String entitlementsToken,
+			@RequestHeader("Authorization") String authorization);
 }

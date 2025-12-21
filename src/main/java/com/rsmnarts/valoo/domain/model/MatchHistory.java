@@ -34,11 +34,12 @@ public class MatchHistory {
 		private String result; // "VICTORY", "DEFEAT"
 		private String rankName;
 		private String rankIcon;
-		private boolean isRanked;
+		private Boolean isRanked;
 		private String queueID;
 		private String gameMode;
-		private boolean matchMVP;
-		private boolean teamMVP;
+		private Boolean matchMVP;
+		private Boolean teamMVP;
+		private Integer rankedRatingEarned; // RR change for the main user
 		private List<MatchPlayer> players;
 	}
 
@@ -59,7 +60,8 @@ public class MatchHistory {
 		private int score;
 		private String rankName;
 		private String rankIcon;
-		private boolean matchMVP;
-		private boolean teamMVP;
+		private Boolean matchMVP;
+		private Boolean teamMVP;
+		private Integer rankedRatingEarned;
 	}
 }

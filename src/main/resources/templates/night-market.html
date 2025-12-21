@@ -108,7 +108,7 @@
                                 let btnLabel = 'L' + (index + 1);
                                 const match = level.displayName?.match(/Level (\d+)/i);
                                 if (match) btnLabel = 'L' + match[1];
-                                buttons += `<button onclick="openVideo('${level.streamedVideo}')" class="inline-block mr-2 mb-2 w-6 h-6 flex items-center justify-center bg-white/5 border border-white/20 text-white text-xs font-bold hover:bg-valorant-red hover:border-valorant-red transition-all duration-200" title="${level.displayName || 'Level ' + (index + 1)}">${btnLabel}</button>`;
+                                buttons += `<button onclick="openVideo('${level.streamedVideo}')" class="inline-block mr-1 mb-1 w-6 h-6 flex items-center justify-center bg-white/5 border border-white/20 text-white text-xs font-bold hover:bg-valorant-red hover:border-valorant-red transition-all duration-200" title="${level.displayName || 'Level ' + (index + 1)}">${btnLabel}</button>`;
                             }
                         });
                         if (buttons) {
@@ -125,7 +125,7 @@
                         let swatches = '';
                         skin.chromas.forEach(chroma => {
                             if (chroma.swatch) {
-                                swatches += `<img loading="lazy" src="${chroma.swatch}" alt="${chroma.displayName}" class="w-6 h-6 rounded border border-white/20 hover:border-valorant-red cursor-pointer transition-all duration-200" onclick="changeCardImage(this, '${chroma.displayIcon}')" title="${chroma.displayName}">`;
+                                swatches += `<img loading="lazy" src="${chroma.swatch}" alt="${chroma.displayName}" class="w-6 h-6 mb-1 rounded border border-white/20 hover:border-valorant-red cursor-pointer transition-all duration-200" onclick="changeCardImage(this, '${chroma.displayIcon}')" title="${chroma.displayName}">`;
                             }
                         });
                         if (swatches) chromaHtml = `<div><p class="text-xs text-valorant-text-secondary uppercase mb-2 font-bold tracking-wider">Variants</p><div class="flex flex-wrap gap-2">${swatches}</div></div>`;

@@ -5,6 +5,7 @@ import java.util.List;
 import com.rsmnarts.valoo.domain.model.DailyStore;
 import com.rsmnarts.valoo.domain.model.MatchHistory;
 import com.rsmnarts.valoo.domain.model.NightMarket;
+import com.rsmnarts.valoo.infrastructure.client.dto.CompetitiveUpdatesResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.PlayerNameResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.StorefrontResponse;
 import com.rsmnarts.valoo.infrastructure.client.dto.WalletResponse;
@@ -22,4 +23,11 @@ public interface RiotValorantUseCase {
 			String region);
 
 	WalletResponse getWallet(String puuid, String accessToken, String entitlementsToken, String region);
+
+	CompetitiveUpdatesResponse getCompetitiveUpdates(String puuid, String accessToken, String entitlementsToken,
+			String region);
+
+	PlayerNameResponse getPlayer(String puuid, String accessToken, String entitlementsToken, String region);
+
+	void forceRefreshMatchHistory(String puuid, String accessToken, String entitlementsToken, String region);
 }
